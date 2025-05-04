@@ -1,1 +1,6 @@
-idf_component_register(SRCS "main.c" INCLUDE_DIRS "include")
+if(${IDF_TARGET} STREQUAL esp8266)
+    set(requires driver zh_vector)
+else()
+    set(requires driver esp_event zh_vector)
+endif()
+idf_component_register(SRCS "zh_pcf8574.c" INCLUDE_DIRS "include" REQUIRES ${requires})
