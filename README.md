@@ -47,7 +47,7 @@ One expander on bus. All GPIO's as output (except P0 - input). Interrupt is enab
 #define I2C_PORT (I2C_NUM_MAX - 1)
 
 #ifndef CONFIG_IDF_TARGET_ESP8266
-i2c_master_bus_handle_t i2c_bus_handle = {0};
+i2c_master_bus_handle_t i2c_bus_handle = NULL;
 #endif
 
 zh_pcf8574_handle_t pcf8574_handle = {0};
@@ -103,8 +103,8 @@ void app_main(void)
     pcf8574_init_config.i2c_handle = i2c_bus_handle;
 #endif
     pcf8574_init_config.i2c_address = 0x38;
-    pcf8574_init_config.p0_gpio_work_mode = EXP_GPIO_INPUT; // Required only for input GPIO.
-    pcf8574_init_config.interrupt_gpio = GPIO_NUM_14;       // Required only if used input GPIO interrupts.
+    pcf8574_init_config.p0_gpio_work_mode = true;     // Required only for input GPIO.
+    pcf8574_init_config.interrupt_gpio = GPIO_NUM_14; // Required only if used input GPIO interrupts.
     zh_pcf8574_init(&pcf8574_init_config, &pcf8574_handle);
     uint8_t reg = 0;
     zh_pcf8574_read(&pcf8574_handle, &reg);
@@ -114,13 +114,13 @@ void app_main(void)
     zh_pcf8574_read(&pcf8574_handle, &reg);
     print_gpio_status("GPIO status: ", reg);
     printf("Sets P0 to 0.\n");
-    zh_pcf8574_write_gpio(&pcf8574_handle, EXP_GPIO_NUM_P0, 0); // GPIO P0 will not be changed because it is operating in input mode.
+    zh_pcf8574_write_gpio(&pcf8574_handle, 0, false); // GPIO P0 will not be changed because it is operating in input mode.
     bool gpio = 0;
-    zh_pcf8574_read_gpio(&pcf8574_handle, EXP_GPIO_NUM_P0, &gpio);
+    zh_pcf8574_read_gpio(&pcf8574_handle, 0, &gpio);
     printf("P0 status: %d.\n", gpio);
     printf("Set P1 to 0.\n");
-    zh_pcf8574_write_gpio(&pcf8574_handle, EXP_GPIO_NUM_P1, 0);
-    zh_pcf8574_read_gpio(&pcf8574_handle, EXP_GPIO_NUM_P1, &gpio);
+    zh_pcf8574_write_gpio(&pcf8574_handle, 1, false);
+    zh_pcf8574_read_gpio(&pcf8574_handle, 1, &gpio);
     printf("P1 status: %d.\n", gpio);
     zh_pcf8574_read(&pcf8574_handle, &reg);
     print_gpio_status("GPIO status: ", reg);
