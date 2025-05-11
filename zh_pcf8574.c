@@ -14,7 +14,7 @@ static const char *TAG = "zh_pcf8574";
         return err;                           \
     }
 
-static gpio_num_t _interrupt_gpio = GPIO_NUM_MAX;
+static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
 static SemaphoreHandle_t _interrupt_semaphore = NULL;
 static uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 
@@ -49,7 +49,7 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
         return err;
     }
     ZH_PCF8574_LOGI("GPIO setup completed successfully.");
-    if (config->interrupt_gpio < GPIO_NUM_MAX && config->interrupt_gpio >= GPIO_NUM_0 && handle->gpio_work_mode != 0)
+    if (config->interrupt_gpio < GPIO_NUM_MAX && handle->gpio_work_mode != 0)
     {
         err = _zh_pcf8574_configure_interrupts(config, *handle);
         if (err != ESP_OK)

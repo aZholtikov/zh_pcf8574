@@ -35,19 +35,19 @@ extern "C"
 
     typedef struct // Structure for initial initialization of PCF8574 expander.
     {
-        uint8_t task_priority;     // Task priority for the PCF8574 expander isr processing. @note It is not recommended to set a value less than 10.
-        uint16_t stack_size;       // Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is 2048 bytes.
-        uint8_t i2c_address;       // Expander I2C address.
-        bool p0_gpio_work_mode;    // Expander GPIO PO work mode. True for input, false for output.
-        bool p1_gpio_work_mode;    // Expander GPIO P1 work mode. True for input, false for output.
-        bool p2_gpio_work_mode;    // Expander GPIO P2 work mode. True for input, false for output.
-        bool p3_gpio_work_mode;    // Expander GPIO P3 work mode. True for input, false for output.
-        bool p4_gpio_work_mode;    // Expander GPIO P4 work mode. True for input, false for output.
-        bool p5_gpio_work_mode;    // Expander GPIO P5 work mode. True for input, false for output.
-        bool p6_gpio_work_mode;    // Expander GPIO P6 work mode. True for input, false for output.
-        bool p7_gpio_work_mode;    // Expander GPIO P7 work mode. True for input, false for output.
-        gpio_num_t interrupt_gpio; // Interrupt GPIO. @attention Must be same for all PCF8574 expanders.
-        bool i2c_port;             // I2C port. @attention Must be same for all PCF8574 expanders.
+        uint8_t task_priority;  // Task priority for the PCF8574 expander isr processing. @note It is not recommended to set a value less than 10.
+        uint16_t stack_size;    // Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is 2048 bytes.
+        uint8_t i2c_address;    // Expander I2C address.
+        bool p0_gpio_work_mode; // Expander GPIO PO work mode. True for input, false for output.
+        bool p1_gpio_work_mode; // Expander GPIO P1 work mode. True for input, false for output.
+        bool p2_gpio_work_mode; // Expander GPIO P2 work mode. True for input, false for output.
+        bool p3_gpio_work_mode; // Expander GPIO P3 work mode. True for input, false for output.
+        bool p4_gpio_work_mode; // Expander GPIO P4 work mode. True for input, false for output.
+        bool p5_gpio_work_mode; // Expander GPIO P5 work mode. True for input, false for output.
+        bool p6_gpio_work_mode; // Expander GPIO P6 work mode. True for input, false for output.
+        bool p7_gpio_work_mode; // Expander GPIO P7 work mode. True for input, false for output.
+        uint8_t interrupt_gpio; // Interrupt GPIO. @attention Must be same for all PCF8574 expanders.
+        bool i2c_port;          // I2C port. @attention Must be same for all PCF8574 expanders.
 #ifndef CONFIG_IDF_TARGET_ESP8266
         i2c_master_bus_handle_t i2c_handle; // Unique I2C bus handle. @attention Must be same for all PCF8574 expanders.
 #endif
