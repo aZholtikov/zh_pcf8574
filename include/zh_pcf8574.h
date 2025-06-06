@@ -64,7 +64,7 @@ extern "C"
         i2c_master_bus_handle_t i2c_handle; // Unique I2C bus handle.
         i2c_master_dev_handle_t dev_handle; // Unique I2C device handle.
 #endif
-        uint8_t system; // System variable for use in another components.
+        void *system; // System pointer for use in another components.
     } zh_pcf8574_handle_t;
 
     ESP_EVENT_DECLARE_BASE(ZH_PCF8574);
