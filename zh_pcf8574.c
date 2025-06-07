@@ -240,7 +240,6 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
                         event.gpio_number = j;
                         event.gpio_level = new_reg & _gpio_matrix[j];
                     }
-                    break;
                 }
             }
             if (event.gpio_number != 0xFF)
