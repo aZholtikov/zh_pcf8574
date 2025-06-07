@@ -15,7 +15,7 @@
 
 1. Enable interrupt support only if input GPIO's are used.
 2. All the INT GPIO's on the extenders must be connected to the one GPIO on ESP.
-3. The input GPIO's are always pullup to the power supply. They must be connected to ground to trigger an interrupt.
+3. The input GPIO's are always pullup to the power supply.
 
 ## Dependencies
 
@@ -133,6 +133,6 @@ void app_main(void)
 void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) // Required only if used input GPIO interrupts.
 {
     zh_pcf8574_event_on_isr_t *event = event_data;
-    printf("Interrupt happened on device address 0x%02X on GPIO number %d.\n", event->i2c_address, event->gpio_number);
+    printf("Interrupt happened on device address 0x%02X on GPIO number %d at level %d.\n", event->i2c_address, event->gpio_number, event->gpio_level);
 }
 ```

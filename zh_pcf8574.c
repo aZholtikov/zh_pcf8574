@@ -223,8 +223,9 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
             zh_pcf8574_event_on_isr_t event = {0};
             event.i2c_address = handle->i2c_address;
             event.gpio_number = 0xFF;
-            uint8_t reg_temp = 0;
-            esp_err_t err = _zh_pcf8574_read_register(handle, &reg_temp);
+            uint8_t old_reg = handle->gpio_status;
+            uint8_t new_reg = 0;
+            esp_err_t err = _zh_pcf8574_read_register(handle, &new_reg);
             if (err != ESP_OK)
             {
                 ZH_PCF8574_LOGE_ERR("PCF8574 isr processing failed. Failed to read expander register.", err);
@@ -232,9 +233,13 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
             }
             for (uint8_t j = 0; j <= 7; ++j)
             {
-                if (((handle->gpio_work_mode & _gpio_matrix[j]) != 0) && ((reg_temp & _gpio_matrix[j]) == 0))
+                if ((handle->gpio_work_mode & _gpio_matrix[j]) != 0)
                 {
-                    event.gpio_number = j;
+                    if ((old_reg & _gpio_matrix[j]) != (new_reg & _gpio_matrix[j]))
+                    {
+                        event.gpio_number = j;
+                        event.gpio_level = new_reg & _gpio_matrix[j];
+                    }
                     break;
                 }
             }
