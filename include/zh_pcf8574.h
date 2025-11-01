@@ -1,3 +1,7 @@
+/**
+ * @file zh_pcf8574.h
+ */
+
 #pragma once
 
 #include "esp_log.h"
@@ -12,6 +16,9 @@
 #include "esp_event.h"
 #include "zh_vector.h"
 
+/**
+ * @brief PCF8574 expander initial default values.
+ */
 #define ZH_PCF8574_INIT_CONFIG_DEFAULT() \
     {                                    \
         .task_priority = 10,             \
@@ -33,47 +40,58 @@ extern "C"
 {
 #endif
 
-    typedef struct // Structure for initial initialization of PCF8574 expander.
+    /**
+     * @brief Structure for initial initialization of PCF8574 expander.
+     */
+    typedef struct
     {
-        uint8_t task_priority;  // Task priority for the PCF8574 expander isr processing. @note It is not recommended to set a value less than 10.
-        uint16_t stack_size;    // Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is 2048 bytes.
-        uint8_t i2c_address;    // Expander I2C address.
-        bool p0_gpio_work_mode; // Expander GPIO PO work mode. True for input, false for output.
-        bool p1_gpio_work_mode; // Expander GPIO P1 work mode. True for input, false for output.
-        bool p2_gpio_work_mode; // Expander GPIO P2 work mode. True for input, false for output.
-        bool p3_gpio_work_mode; // Expander GPIO P3 work mode. True for input, false for output.
-        bool p4_gpio_work_mode; // Expander GPIO P4 work mode. True for input, false for output.
-        bool p5_gpio_work_mode; // Expander GPIO P5 work mode. True for input, false for output.
-        bool p6_gpio_work_mode; // Expander GPIO P6 work mode. True for input, false for output.
-        bool p7_gpio_work_mode; // Expander GPIO P7 work mode. True for input, false for output.
-        uint8_t interrupt_gpio; // Interrupt GPIO. @attention Must be same for all PCF8574 expanders.
-        bool i2c_port;          // I2C port. @attention Must be same for all PCF8574 expanders.
+        uint8_t task_priority;  /*!< Task priority for the PCF8574 expander isr processing. @note It is not recommended to set a value less than 10. */
+        uint16_t stack_size;    /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is 2048 bytes. */
+        uint8_t i2c_address;    /*!< Expander I2C address. */
+        bool p0_gpio_work_mode; /*!< Expander GPIO PO work mode. True for input, false for output. */
+        bool p1_gpio_work_mode; /*!< Expander GPIO P1 work mode. True for input, false for output. */
+        bool p2_gpio_work_mode; /*!< Expander GPIO P2 work mode. True for input, false for output. */
+        bool p3_gpio_work_mode; /*!< Expander GPIO P3 work mode. True for input, false for output. */
+        bool p4_gpio_work_mode; /*!< Expander GPIO P4 work mode. True for input, false for output. */
+        bool p5_gpio_work_mode; /*!< Expander GPIO P5 work mode. True for input, false for output. */
+        bool p6_gpio_work_mode; /*!< Expander GPIO P6 work mode. True for input, false for output. */
+        bool p7_gpio_work_mode; /*!< Expander GPIO P7 work mode. True for input, false for output. */
+        uint8_t interrupt_gpio; /*!< Interrupt GPIO. @attention Must be same for all PCF8574 expanders. */
+        bool i2c_port;          /*!< I2C port. @attention Must be same for all PCF8574 expanders. */
 #ifndef CONFIG_IDF_TARGET_ESP8266
-        i2c_master_bus_handle_t i2c_handle; // Unique I2C bus handle. @attention Must be same for all PCF8574 expanders.
+        i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
 #endif
     } zh_pcf8574_init_config_t;
 
-    typedef struct // PCF8574 expander handle.
+    /**
+     * @brief PCF8574 expander handle.
+     */
+    typedef struct
     {
-        uint8_t i2c_address;    // Expander I2C address.
-        uint8_t gpio_work_mode; // Expander GPIO's work mode.
-        uint8_t gpio_status;    // Expander GPIO's status.
-        bool is_initialized;    // Expander initialization flag.
-        bool i2c_port;          // I2C port.
+        uint8_t i2c_address;    /*!< Expander I2C address. */
+        uint8_t gpio_work_mode; /*!< Expander GPIO's work mode. */
+        uint8_t gpio_status;    /*!< Expander GPIO's status. */
+        bool is_initialized;    /*!< Expander initialization flag. */
+        bool i2c_port;          /*!< I2C port. */
 #ifndef CONFIG_IDF_TARGET_ESP8266
-        i2c_master_bus_handle_t i2c_handle; // Unique I2C bus handle.
-        i2c_master_dev_handle_t dev_handle; // Unique I2C device handle.
+        i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. */
+        i2c_master_dev_handle_t dev_handle; /*!< Unique I2C device handle. */
 #endif
-        void *system; // System pointer for use in another components.
+        void *system; /*!< System pointer for use in another components. */
     } zh_pcf8574_handle_t;
 
     ESP_EVENT_DECLARE_BASE(ZH_PCF8574);
 
-    typedef struct // Structure for sending data to the event handler when cause an interrupt. @note Should be used with ZH_PCF8574W event base.
+    /**
+     * @brief Structure for sending data to the event handler when cause an interrupt.
+     *
+     * @note Should be used with ZH_PCF8574 event base.
+     */
+    typedef struct
     {
-        uint8_t i2c_address; // The i2c address of PCF8574 expander that caused the interrupt.
-        uint8_t gpio_number; // The GPIO that caused the interrupt.
-        bool gpio_level;     // The GPIO level that caused the interrupt.
+        uint8_t i2c_address; /*!< The i2c address of PCF8574 expander that caused the interrupt. */
+        uint8_t gpio_number; /*!< The GPIO that caused the interrupt. */
+        bool gpio_level;     /*!< The GPIO level that caused the interrupt. */
     } zh_pcf8574_event_on_isr_t;
 
     /**
