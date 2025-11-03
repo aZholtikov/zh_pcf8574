@@ -133,9 +133,7 @@ static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *con
     ZH_ERROR_CHECK((config->i2c_address >= 0x20 && config->i2c_address <= 0x27) || (config->i2c_address >= 0x38 && config->i2c_address <= 0x3F), ESP_ERR_INVALID_ARG, NULL, "Invalid I2C address.");
     ZH_ERROR_CHECK(config->task_priority >= 10 && config->stack_size >= 2048, ESP_ERR_INVALID_ARG, NULL, "Invalid task settings.");
     ZH_ERROR_CHECK(config->interrupt_gpio >= GPIO_NUM_0 && config->interrupt_gpio <= GPIO_NUM_MAX, ESP_ERR_INVALID_ARG, NULL, "Invalid GPIO number.");
-#ifndef CONFIG_IDF_TARGET_ESP8266
     ZH_ERROR_CHECK(config->i2c_handle != NULL, ESP_ERR_INVALID_ARG, NULL, "Invalid I2C handle.");
-#endif
     return ESP_OK;
 }
 
@@ -170,7 +168,6 @@ static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config, z
 
 static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t *handle)
 {
-#ifndef CONFIG_IDF_TARGET_ESP8266
     i2c_device_config_t pcf8574_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = config->i2c_address,
@@ -181,15 +178,12 @@ static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, zh
     ZH_ERROR_CHECK(err == ESP_OK, err, NULL;, "Failed to add I2C device.");
     err = i2c_master_probe(config->i2c_handle, config->i2c_address, 1000 / portTICK_PERIOD_MS);
     ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(_dev_handle), "Expander not connected or not responding.");
-    handle->i2c_handle = config->i2c_handle;
     handle->dev_handle = _dev_handle;
-#endif
     handle->gpio_work_mode = (config->p7_gpio_work_mode << 7) | (config->p6_gpio_work_mode << 6) | (config->p5_gpio_work_mode << 5) |
                              (config->p4_gpio_work_mode << 4) | (config->p3_gpio_work_mode << 3) | (config->p2_gpio_work_mode << 2) |
                              (config->p1_gpio_work_mode << 1) | (config->p0_gpio_work_mode << 0);
     handle->gpio_status = handle->gpio_work_mode;
     handle->i2c_address = config->i2c_address;
-    handle->i2c_port = config->i2c_port;
     return ESP_OK;
 }
 
@@ -268,17 +262,7 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
 
 static esp_err_t _zh_pcf8574_read_register(zh_pcf8574_handle_t *handle, uint8_t *reg)
 {
-#ifdef CONFIG_IDF_TARGET_ESP8266
-    i2c_cmd_handle_t i2c_cmd_handle = i2c_cmd_link_create();
-    i2c_master_start(i2c_cmd_handle);
-    i2c_master_write_byte(i2c_cmd_handle, handle->i2c_address << 1 | I2C_MASTER_READ, true);
-    i2c_master_read_byte(i2c_cmd_handle, &handle->gpio_status, I2C_MASTER_NACK);
-    i2c_master_stop(i2c_cmd_handle);
-    esp_err_t err = i2c_master_cmd_begin(handle->i2c_port, i2c_cmd_handle, 1000 / portTICK_PERIOD_MS);
-    i2c_cmd_link_delete(i2c_cmd_handle);
-#else
     esp_err_t err = i2c_master_receive(handle->dev_handle, &handle->gpio_status, sizeof(handle->gpio_status), 1000 / portTICK_PERIOD_MS);
-#endif
     ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C driver error.");
     *reg = handle->gpio_status;
     return ESP_OK;
@@ -286,17 +270,7 @@ static esp_err_t _zh_pcf8574_read_register(zh_pcf8574_handle_t *handle, uint8_t 
 
 static esp_err_t _zh_pcf8574_write_register(zh_pcf8574_handle_t *handle, uint8_t reg)
 {
-#ifdef CONFIG_IDF_TARGET_ESP8266
-    i2c_cmd_handle_t i2c_cmd_handle = i2c_cmd_link_create();
-    i2c_master_start(i2c_cmd_handle);
-    i2c_master_write_byte(i2c_cmd_handle, handle->i2c_address << 1 | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(i2c_cmd_handle, reg, true);
-    i2c_master_stop(i2c_cmd_handle);
-    esp_err_t err = i2c_master_cmd_begin(handle->i2c_port, i2c_cmd_handle, 1000 / portTICK_PERIOD_MS);
-    i2c_cmd_link_delete(i2c_cmd_handle);
-#else
     esp_err_t err = i2c_master_transmit(handle->dev_handle, &reg, sizeof(reg), 1000 / portTICK_PERIOD_MS);
-#endif
     ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C driver error.");
     handle->gpio_status = reg;
     return ESP_OK;
