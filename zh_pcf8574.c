@@ -61,7 +61,7 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
 esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t *handle, uint8_t *reg)
 {
     ZH_LOGI("PCF8574 read register started.");
-    ZH_ERROR_CHECK(handle != NULL || reg != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read register failed. Invalid argument.");
+    ZH_ERROR_CHECK(handle != NULL && reg != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read register failed. Invalid argument.");
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 read register failed. PCF8574 not initialized.");
     esp_err_t err = _zh_pcf8574_read_register(handle, reg);
     ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 read register failed.");
@@ -94,7 +94,7 @@ esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t *handle)
 esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool *status)
 {
     ZH_LOGI("PCF8574 read GPIO started.");
-    ZH_ERROR_CHECK(handle != NULL || status != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read GPIO failed. Invalid argument.");
+    ZH_ERROR_CHECK(handle != NULL && status != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read GPIO failed. Invalid argument.");
     ZH_ERROR_CHECK(gpio <= 7, ESP_FAIL, NULL, "PCF8574 read GPIO failed. Invalid GPIO number.")
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 read GPIO failed. PCF8574 not initialized.");
     uint8_t gpio_temp = _gpio_matrix[gpio];
@@ -175,7 +175,7 @@ static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, zh
     };
     i2c_master_dev_handle_t _dev_handle = NULL;
     esp_err_t err = i2c_master_bus_add_device(config->i2c_handle, &pcf8574_config, &_dev_handle);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL;, "Failed to add I2C device.");
+    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed to add I2C device.");
     err = i2c_master_probe(config->i2c_handle, config->i2c_address, 1000 / portTICK_PERIOD_MS);
     ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(_dev_handle), "Expander not connected or not responding.");
     handle->dev_handle = _dev_handle;
