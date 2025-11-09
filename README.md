@@ -76,12 +76,12 @@ void app_main(void)
     i2c_new_master_bus(&i2c_bus_config, &i2c_bus_handle);
     esp_event_loop_create_default();                                                                          // Required only if used input GPIO interrupts.
     esp_event_handler_instance_register(ZH_PCF8574, ESP_EVENT_ANY_ID, &zh_pcf8574_event_handler, NULL, NULL); // Required only if used input GPIO interrupts.
-    zh_pcf8574_init_config_t pcf8574_init_config = ZH_PCF8574_INIT_CONFIG_DEFAULT();
-    pcf8574_init_config.i2c_handle = i2c_bus_handle;
-    pcf8574_init_config.i2c_address = 0x38;
-    pcf8574_init_config.p0_gpio_work_mode = true;     // Required only for input GPIO.
-    pcf8574_init_config.interrupt_gpio = GPIO_NUM_14; // Required only if used input GPIO interrupts.
-    zh_pcf8574_init(&pcf8574_init_config, &pcf8574_handle);
+    zh_pcf8574_init_config_t config = ZH_PCF8574_INIT_CONFIG_DEFAULT();
+    config.i2c_handle = i2c_bus_handle;
+    config.i2c_address = 0x38;
+    config.p0_gpio_work_mode = true;     // Required only for input GPIO.
+    config.interrupt_gpio = GPIO_NUM_14; // Required only if used input GPIO interrupts.
+    zh_pcf8574_init(&config, &pcf8574_handle);
     uint8_t reg = 0;
     zh_pcf8574_read(&pcf8574_handle, &reg);
     print_gpio_status("GPIO status: ", reg);
