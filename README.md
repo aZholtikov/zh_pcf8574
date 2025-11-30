@@ -16,6 +16,14 @@
 2. All the INT GPIO's on the extenders must be connected to the one GPIO on ESP.
 3. The input GPIO's are always pullup to the power supply.
 
+## Attention
+
+For correct operation, please enable the following settings in the menuconfig:
+
+```text
+GPIO_CTRL_FUNC_IN_IRAM
+```
+
 ## Dependencies
 
 1. [zh_vector](http://git.zh.com.ru/esp_components/zh_vector)
