@@ -35,6 +35,8 @@ extern "C"
 {
 #endif
 
+    extern TaskHandle_t zh_pcf8574; /*!< Unique task handle. */
+
     /**
      * @brief Structure for initial initialization of PCF8574 expander.
      */

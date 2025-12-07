@@ -13,8 +13,10 @@ static const char *TAG = "zh_pcf8574";
         return err;                                  \
     }
 
-static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
+TaskHandle_t zh_pcf8574 = NULL;
 static SemaphoreHandle_t _interrupt_semaphore = NULL;
+
+static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static bool _is_prev_gpio_isr_service = false;
 
@@ -50,20 +52,24 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
         err = _zh_pcf8574_resources_init(config);
         if (_is_prev_gpio_isr_service == true)
         {
-            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio); gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector), "PCF8574 initialization failed. Resources initialization failed.");
+            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio);
+                           gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector), "PCF8574 initialization failed. Resources initialization failed.");
         }
         else
         {
-            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio); gpio_uninstall_isr_service(); gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector), "PCF8574 initialization failed. Resources initialization failed.");
+            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio);
+                           gpio_uninstall_isr_service(); gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector), "PCF8574 initialization failed. Resources initialization failed.");
         }
         err = _zh_pcf8574_task_init(config);
         if (_is_prev_gpio_isr_service == true)
         {
-            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio); gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector); vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
+            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio);
+                           gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector); vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
         }
         else
         {
-            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio); gpio_uninstall_isr_service(); gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector); vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
+            ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove(config->interrupt_gpio);
+                           gpio_uninstall_isr_service(); gpio_reset_pin(config->interrupt_gpio); zh_vector_free(&_vector); vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
         }
     }
     handle->is_initialized = true;
@@ -220,7 +226,7 @@ static esp_err_t _zh_pcf8574_resources_init(const zh_pcf8574_init_config_t *conf
 
 static esp_err_t _zh_pcf8574_task_init(const zh_pcf8574_init_config_t *config)
 {
-    BaseType_t err = xTaskCreatePinnedToCore(&_zh_pcf8574_isr_processing_task, "zh_pcf8574_isr_processing_task", config->stack_size, NULL, config->task_priority, NULL, tskNO_AFFINITY);
+    BaseType_t err = xTaskCreatePinnedToCore(&_zh_pcf8574_isr_processing_task, "zh_pcf8574_isr_processing_task", config->stack_size, NULL, config->task_priority, &zh_pcf8574, tskNO_AFFINITY);
     ZH_ERROR_CHECK(err == pdPASS, err, NULL, "Failed to create isr processing task.")
     return ESP_OK;
 }
