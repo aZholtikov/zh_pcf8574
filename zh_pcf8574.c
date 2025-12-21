@@ -20,7 +20,6 @@ static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static bool _is_prev_gpio_isr_service = false;
 static zh_pcf8574_stats_t _stats = {0};
-static uint8_t _expander_counter = 0;
 
 static zh_vector_t _vector = {0};
 
@@ -75,7 +74,6 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
         }
     }
     handle->is_initialized = true;
-    ++_expander_counter;
     ZH_LOGI("PCF8574 initialization completed successfully.");
     return ESP_OK;
 }
@@ -110,7 +108,6 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle)
     }
     i2c_master_bus_rm_device(handle->dev_handle);
     handle->is_initialized = false;
-    --_expander_counter;
     ZH_LOGI("PCF8574 deinitialization completed successfully.");
     return ESP_OK;
 }
