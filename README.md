@@ -116,6 +116,16 @@ void app_main(void)
     zh_pcf8574_reset(&pcf8574_handle);
     zh_pcf8574_read(&pcf8574_handle, &reg);
     print_gpio_status("GPIO status: ", reg);
+    for (;;)
+    {
+        const zh_pcf8574_stats_t *stats = zh_pcf8574_get_stats();
+        printf("Number of i2c driver error: %ld.\n", stats->i2c_driver_error);
+        printf("Number of event post error: %ld.\n", stats->event_post_error);
+        printf("Number of vector error: %ld.\n", stats->vector_error);
+        printf("Number of queue overflow error: %ld.\n", stats->queue_overflow_error);
+        printf("Minimum free stack size: %ld.\n", stats->min_stack_size);
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+    }
 }
 
 void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) // Required only if used input GPIO interrupts.

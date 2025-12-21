@@ -19,6 +19,7 @@ static SemaphoreHandle_t _interrupt_semaphore = NULL;
 static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static bool _is_prev_gpio_isr_service = false;
+static zh_pcf8574_stats_t _stats = {0};
 
 static zh_vector_t _vector = {0};
 
@@ -146,6 +147,22 @@ esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool 
     return ESP_OK;
 }
 
+const zh_pcf8574_stats_t *zh_pcf8574_get_stats(void)
+{
+    return &_stats;
+}
+
+void zh_pcf8574_reset_stats(void)
+{
+    ZH_LOGI("Error statistic reset started.");
+    _stats.i2c_driver_error = 0;
+    _stats.event_post_error = 0;
+    _stats.vector_error = 0;
+    _stats.queue_overflow_error = 0;
+    _stats.min_stack_size = 0;
+    ZH_LOGI("Error statistic reset successfully.");
+}
+
 static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *config) // -V2008
 {
     ZH_ERROR_CHECK(config != NULL, ESP_ERR_INVALID_ARG, NULL, "Initial config is NULL.");
@@ -234,7 +251,10 @@ static esp_err_t _zh_pcf8574_task_init(const zh_pcf8574_init_config_t *config)
 static void IRAM_ATTR _zh_pcf8574_isr_handler(void *arg)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xSemaphoreGiveFromISR(_interrupt_semaphore, &xHigherPriorityTaskWoken);
+    if (xSemaphoreGiveFromISR(_interrupt_semaphore, &xHigherPriorityTaskWoken) != pdTRUE)
+    {
+        ++_stats.queue_overflow_error;
+    }
     if (xHigherPriorityTaskWoken == pdTRUE)
     {
         portYIELD_FROM_ISR();
@@ -251,6 +271,7 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
             zh_pcf8574_handle_t *handle = zh_vector_get_item(&_vector, i);
             if (handle == NULL)
             {
+                ++_stats.vector_error;
                 ZH_LOGE("PCF8574 isr processing failed. Failed to get vector item data.", ESP_FAIL);
                 continue;
             }
@@ -281,11 +302,13 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
                 err = esp_event_post(ZH_PCF8574, 0, &event, sizeof(event), 1000 / portTICK_PERIOD_MS);
                 if (err != ESP_OK)
                 {
+                    ++_stats.event_post_error;
                     ZH_LOGE("PCF8574 isr processing failed. Failed to post interrupt event.", err);
                     continue;
                 }
             }
         }
+        _stats.min_stack_size = (uint32_t)uxTaskGetStackHighWaterMark(NULL);
     }
     vTaskDelete(NULL);
 }
@@ -293,7 +316,7 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
 static esp_err_t _zh_pcf8574_read_register(zh_pcf8574_handle_t *handle, uint8_t *reg)
 {
     esp_err_t err = i2c_master_receive(handle->dev_handle, &handle->gpio_status, sizeof(handle->gpio_status), 1000 / portTICK_PERIOD_MS);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C driver error.");
+    ZH_ERROR_CHECK(err == ESP_OK, err, ++_stats.i2c_driver_error, "I2C driver error.");
     *reg = handle->gpio_status;
     return ESP_OK;
 }
@@ -301,7 +324,7 @@ static esp_err_t _zh_pcf8574_read_register(zh_pcf8574_handle_t *handle, uint8_t 
 static esp_err_t _zh_pcf8574_write_register(zh_pcf8574_handle_t *handle, uint8_t reg)
 {
     esp_err_t err = i2c_master_transmit(handle->dev_handle, &reg, sizeof(reg), 1000 / portTICK_PERIOD_MS);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C driver error.");
+    ZH_ERROR_CHECK(err == ESP_OK, err, ++_stats.i2c_driver_error, "I2C driver error.");
     handle->gpio_status = reg;
     return ESP_OK;
 }

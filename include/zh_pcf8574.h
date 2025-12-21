@@ -70,6 +70,18 @@ extern "C"
         void *system;                       /*!< System pointer for use in another components. */
     } zh_pcf8574_handle_t;
 
+    /**
+     * @brief Structure for error statistics storage.
+     */
+    typedef struct
+    {
+        uint32_t i2c_driver_error;     /*!< Number of i2c driver error. */
+        uint32_t event_post_error;     /*!< Number of event post error. */
+        uint32_t vector_error;         /*!< Number of vector error. */
+        uint32_t queue_overflow_error; /*!< Number of queue overflow error. */
+        uint32_t min_stack_size;       /*!< Minimum free stack size. */
+    } zh_pcf8574_stats_t;
+
     ESP_EVENT_DECLARE_BASE(ZH_PCF8574);
 
     /**
@@ -158,6 +170,18 @@ extern "C"
      * @return ESP_OK if success or an error code otherwise.
      */
     esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool status);
+
+    /**
+     * @brief Get error statistics.
+     *
+     * @return Pointer to the statistics structure.
+     */
+    const zh_pcf8574_stats_t *zh_pcf8574_get_stats(void);
+
+    /**
+     * @brief Reset error statistics.
+     */
+    void zh_pcf8574_reset_stats(void);
 
 #ifdef __cplusplus
 }
