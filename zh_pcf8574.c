@@ -20,6 +20,7 @@ static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static bool _is_prev_gpio_isr_service = false;
 static zh_pcf8574_stats_t _stats = {0};
+static uint8_t _expander_counter = 0;
 
 static zh_vector_t _vector = {0};
 
@@ -74,7 +75,43 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
         }
     }
     handle->is_initialized = true;
+    ++_expander_counter;
     ZH_LOGI("PCF8574 initialization completed successfully.");
+    return ESP_OK;
+}
+
+esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle)
+{
+    ZH_LOGI("PCF8574 deinitialization started.");
+    ZH_ERROR_CHECK(handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 deinitialization failed. Invalid argument.");
+    ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. PCF8574 not initialized.");
+    if (_interrupt_gpio < GPIO_NUM_MAX && handle->gpio_work_mode != 0)
+    {
+        for (uint16_t i = 0; i < zh_vector_get_size(&_vector); ++i)
+        {
+            zh_pcf8574_handle_t *temp_handle = zh_vector_get_item(&_vector, i);
+            if (handle->i2c_address == temp_handle->i2c_address)
+            {
+                zh_vector_delete_item(&_vector, i);
+                break;
+            }
+        }
+        if (zh_vector_get_size(&_vector) == 0)
+        {
+            gpio_isr_handler_remove((gpio_num_t)_interrupt_gpio);
+            gpio_reset_pin((gpio_num_t)_interrupt_gpio);
+            zh_vector_free(&_vector);
+            if (_is_prev_gpio_isr_service == true)
+            {
+                gpio_uninstall_isr_service();
+            }
+            _interrupt_gpio = GPIO_NUM_MAX;
+        }
+    }
+    i2c_master_bus_rm_device(handle->dev_handle);
+    handle->is_initialized = false;
+    --_expander_counter;
+    ZH_LOGI("PCF8574 deinitialization completed successfully.");
     return ESP_OK;
 }
 

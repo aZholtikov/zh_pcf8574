@@ -113,6 +113,15 @@ extern "C"
     esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t *handle);
 
     /**
+     * @brief Deinitialize PCF8574 expander.
+     *
+     * @param[in] handle Pointer to unique PCF8574 handle.
+     *
+     * @return ESP_OK if success or an error code otherwise.
+     */
+    esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle);
+    
+    /**
      * @brief Read PCF8574 all GPIO's status.
      *
      * @param[in] handle Pointer to unique PCF8574 handle.
