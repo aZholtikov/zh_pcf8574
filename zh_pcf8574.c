@@ -99,6 +99,8 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle)
             gpio_isr_handler_remove((gpio_num_t)_interrupt_gpio);
             gpio_reset_pin((gpio_num_t)_interrupt_gpio);
             zh_vector_free(&_vector);
+            vSemaphoreDelete(_interrupt_semaphore);
+            vTaskDelete(zh_pcf8574);
             if (_is_prev_gpio_isr_service == false)
             {
                 gpio_uninstall_isr_service();
