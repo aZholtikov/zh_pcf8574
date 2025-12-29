@@ -147,11 +147,11 @@ esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t *handle)
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool *status) // -V2008
+esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_t gpio, bool *status) // -V2008
 {
     ZH_LOGI("PCF8574 read GPIO started.");
     ZH_ERROR_CHECK(handle != NULL && status != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read GPIO failed. Invalid argument.");
-    ZH_ERROR_CHECK(gpio <= 7, ESP_FAIL, NULL, "PCF8574 read GPIO failed. Invalid GPIO number.")
+    ZH_ERROR_CHECK(gpio >= ZH_PCF8574_GPIO_NUM_P0 && gpio < ZH_PCF8574_GPIO_NUM_MAX, ESP_FAIL, NULL, "PCF8574 read GPIO failed. Invalid GPIO number.")
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 read GPIO failed. PCF8574 not initialized.");
     uint8_t gpio_temp = _gpio_matrix[gpio];
     uint8_t reg_temp = 0;
@@ -162,11 +162,11 @@ esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool *
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool status) // -V2008
+esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_t gpio, bool status) // -V2008
 {
     ZH_LOGI("PCF8574 write GPIO started.");
     ZH_ERROR_CHECK(handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 write GPIO failed. Invalid argument.");
-    ZH_ERROR_CHECK(gpio <= 7, ESP_FAIL, NULL, "PCF8574 write GPIO failed. Invalid GPIO number.")
+    ZH_ERROR_CHECK(gpio >= ZH_PCF8574_GPIO_NUM_P0 && gpio < ZH_PCF8574_GPIO_NUM_MAX, ESP_FAIL, NULL, "PCF8574 write GPIO failed. Invalid GPIO number.")
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 write GPIO failed. PCF8574 not initialized.");
     uint8_t gpio_temp = _gpio_matrix[gpio];
     esp_err_t err = ESP_OK;

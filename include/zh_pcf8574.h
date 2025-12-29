@@ -12,22 +12,27 @@
 #include "esp_event.h"
 #include "zh_vector.h"
 
+#define ZH_PCF8574_GPIO_OUTPUT false
+#define ZH_PCF8574_GPIO_INPUT true
+#define ZH_PCF8574_GPIO_LOW false
+#define ZH_PCF8574_GPIO_HIGH true
+
 /**
  * @brief PCF8574 expander initial default values.
  */
-#define ZH_PCF8574_INIT_CONFIG_DEFAULT() \
-    {                                    \
-        .task_priority = 10,             \
-        .stack_size = 2048,              \
-        .i2c_address = 0xFF,             \
-        .p0_gpio_work_mode = 0,          \
-        .p1_gpio_work_mode = 0,          \
-        .p2_gpio_work_mode = 0,          \
-        .p3_gpio_work_mode = 0,          \
-        .p4_gpio_work_mode = 0,          \
-        .p5_gpio_work_mode = 0,          \
-        .p6_gpio_work_mode = 0,          \
-        .p7_gpio_work_mode = 0,          \
+#define ZH_PCF8574_INIT_CONFIG_DEFAULT()             \
+    {                                                \
+        .task_priority = 10,                         \
+        .stack_size = 2048,                          \
+        .i2c_address = 0xFF,                         \
+        .p0_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p1_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p2_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p3_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p4_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p5_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p6_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
+        .p7_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
         .interrupt_gpio = GPIO_NUM_MAX}
 
 #ifdef __cplusplus
@@ -38,6 +43,22 @@ extern "C"
     extern TaskHandle_t zh_pcf8574; /*!< Unique task handle. */
 
     /**
+     * @brief Enumeration of PCF8574 expander GPIO.
+     */
+    typedef enum
+    {
+        ZH_PCF8574_GPIO_NUM_P0 = 0,
+        ZH_PCF8574_GPIO_NUM_P1,
+        ZH_PCF8574_GPIO_NUM_P2,
+        ZH_PCF8574_GPIO_NUM_P3,
+        ZH_PCF8574_GPIO_NUM_P4,
+        ZH_PCF8574_GPIO_NUM_P5,
+        ZH_PCF8574_GPIO_NUM_P6,
+        ZH_PCF8574_GPIO_NUM_P7,
+        ZH_PCF8574_GPIO_NUM_MAX
+    } zh_pcf8574_gpio_num_t;
+
+    /**
      * @brief Structure for initial initialization of PCF8574 expander.
      */
     typedef struct
@@ -45,14 +66,14 @@ extern "C"
         uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note It is not recommended to set a value less than 10. */
         uint16_t stack_size;                /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is 2048 bytes. */
         uint8_t i2c_address;                /*!< Expander I2C address. */
-        bool p0_gpio_work_mode;             /*!< Expander GPIO PO work mode. True for input, false for output. */
-        bool p1_gpio_work_mode;             /*!< Expander GPIO P1 work mode. True for input, false for output. */
-        bool p2_gpio_work_mode;             /*!< Expander GPIO P2 work mode. True for input, false for output. */
-        bool p3_gpio_work_mode;             /*!< Expander GPIO P3 work mode. True for input, false for output. */
-        bool p4_gpio_work_mode;             /*!< Expander GPIO P4 work mode. True for input, false for output. */
-        bool p5_gpio_work_mode;             /*!< Expander GPIO P5 work mode. True for input, false for output. */
-        bool p6_gpio_work_mode;             /*!< Expander GPIO P6 work mode. True for input, false for output. */
-        bool p7_gpio_work_mode;             /*!< Expander GPIO P7 work mode. True for input, false for output. */
+        bool p0_gpio_work_mode;             /*!< Expander GPIO PO work mode. */
+        bool p1_gpio_work_mode;             /*!< Expander GPIO P1 work mode. */
+        bool p2_gpio_work_mode;             /*!< Expander GPIO P2 work mode. */
+        bool p3_gpio_work_mode;             /*!< Expander GPIO P3 work mode. */
+        bool p4_gpio_work_mode;             /*!< Expander GPIO P4 work mode. */
+        bool p5_gpio_work_mode;             /*!< Expander GPIO P5 work mode. */
+        bool p6_gpio_work_mode;             /*!< Expander GPIO P6 work mode. */
+        bool p7_gpio_work_mode;             /*!< Expander GPIO P7 work mode. */
         uint8_t interrupt_gpio;             /*!< Interrupt GPIO. @attention Must be same for all PCF8574 expanders. */
         i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
     } zh_pcf8574_init_config_t;
@@ -120,7 +141,7 @@ extern "C"
      * @return ESP_OK if success or an error code otherwise.
      */
     esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle);
-    
+
     /**
      * @brief Read PCF8574 all GPIO's status.
      *
@@ -165,7 +186,7 @@ extern "C"
      *
      * @return ESP_OK if success or an error code otherwise.
      */
-    esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool *status);
+    esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_t gpio, bool *status);
 
     /**
      * @brief Set PCF8574 GPIO status.
@@ -178,7 +199,7 @@ extern "C"
      *
      * @return ESP_OK if success or an error code otherwise.
      */
-    esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, uint8_t gpio, bool status);
+    esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_t gpio, bool status);
 
     /**
      * @brief Get error statistics.
