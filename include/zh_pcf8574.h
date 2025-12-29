@@ -22,8 +22,8 @@
  */
 #define ZH_PCF8574_INIT_CONFIG_DEFAULT()             \
     {                                                \
-        .task_priority = 10,                         \
-        .stack_size = 2048,                          \
+        .task_priority = 1,                          \
+        .stack_size = configMINIMAL_STACK_SIZE,      \
         .i2c_address = 0xFF,                         \
         .p0_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
         .p1_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
@@ -63,8 +63,8 @@ extern "C"
      */
     typedef struct
     {
-        uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note It is not recommended to set a value less than 10. */
-        uint16_t stack_size;                /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is 2048 bytes. */
+        uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note Minimum value is 1. */
+        uint16_t stack_size;                /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is configMINIMAL_STACK_SIZE. */
         uint8_t i2c_address;                /*!< Expander I2C address. */
         bool p0_gpio_work_mode;             /*!< Expander GPIO PO work mode. */
         bool p1_gpio_work_mode;             /*!< Expander GPIO P1 work mode. */

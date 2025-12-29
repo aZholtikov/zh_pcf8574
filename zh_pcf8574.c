@@ -203,7 +203,7 @@ static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *con
 {
     ZH_ERROR_CHECK(config != NULL, ESP_ERR_INVALID_ARG, NULL, "Initial config is NULL.");
     ZH_ERROR_CHECK((config->i2c_address >= 0x20 && config->i2c_address <= 0x27) || (config->i2c_address >= 0x38 && config->i2c_address <= 0x3F), ESP_ERR_INVALID_ARG, NULL, "Invalid I2C address.");
-    ZH_ERROR_CHECK(config->task_priority >= 10 && config->stack_size >= 2048, ESP_ERR_INVALID_ARG, NULL, "Invalid task settings.");
+    ZH_ERROR_CHECK(config->task_priority >= 1 && config->stack_size >= configMINIMAL_STACK_SIZE, ESP_ERR_INVALID_ARG, NULL, "Invalid task settings.");
     ZH_ERROR_CHECK(config->interrupt_gpio <= GPIO_NUM_MAX, ESP_ERR_INVALID_ARG, NULL, "Invalid GPIO number.");
     ZH_ERROR_CHECK(config->i2c_handle != NULL, ESP_ERR_INVALID_ARG, NULL, "Invalid I2C handle.");
     return ESP_OK;
