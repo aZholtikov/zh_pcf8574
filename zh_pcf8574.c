@@ -17,6 +17,7 @@ TaskHandle_t zh_pcf8574 = NULL;
 static SemaphoreHandle_t _interrupt_semaphore = NULL;
 
 static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
+static uint8_t _i2c_matrix[16] = {0};
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static bool _is_prev_gpio_isr_service = false;
 static zh_pcf8574_stats_t _stats = {0};
@@ -74,6 +75,14 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
         }
     }
     handle->is_initialized = true;
+    for (uint8_t i = 0; i < sizeof(_i2c_matrix); ++i)
+    {
+        if (_i2c_matrix[i] == 0)
+        {
+            _i2c_matrix[i] = handle->i2c_address;
+            break;
+        }
+    }
     ZH_LOGI("PCF8574 initialization completed successfully.");
     return ESP_OK;
 }
@@ -110,6 +119,14 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle)
     }
     i2c_master_bus_rm_device(handle->dev_handle);
     handle->is_initialized = false;
+    for (uint8_t i = 0; i < sizeof(_i2c_matrix); ++i)
+    {
+        if (_i2c_matrix[i] == handle->i2c_address)
+        {
+            _i2c_matrix[i] = 0;
+            break;
+        }
+    }
     ZH_LOGI("PCF8574 deinitialization completed successfully.");
     return ESP_OK;
 }
@@ -206,6 +223,10 @@ static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *con
     ZH_ERROR_CHECK(config->task_priority >= 1 && config->stack_size >= configMINIMAL_STACK_SIZE, ESP_ERR_INVALID_ARG, NULL, "Invalid task settings.");
     ZH_ERROR_CHECK(config->interrupt_gpio <= GPIO_NUM_MAX, ESP_ERR_INVALID_ARG, NULL, "Invalid GPIO number.");
     ZH_ERROR_CHECK(config->i2c_handle != NULL, ESP_ERR_INVALID_ARG, NULL, "Invalid I2C handle.");
+    for (uint8_t i = 0; i < sizeof(_i2c_matrix); ++i)
+    {
+        ZH_ERROR_CHECK(config->i2c_address != _i2c_matrix[i], ESP_ERR_INVALID_ARG, NULL, "I2C address already present.");
+    }
     return ESP_OK;
 }
 
