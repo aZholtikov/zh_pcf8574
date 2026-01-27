@@ -57,7 +57,6 @@ One expander on bus. All GPIO's as output (except P0 - input). Interrupt is enab
 
 #define I2C_PORT (I2C_NUM_MAX - 1)
 
-i2c_master_bus_handle_t i2c_bus_handle = NULL;
 zh_pcf8574_handle_t pcf8574_handle = {0};
 
 void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
@@ -85,6 +84,7 @@ void app_main(void)
         .glitch_ignore_cnt = 7,
         .flags.enable_internal_pullup = true,
     };
+    i2c_master_bus_handle_t i2c_bus_handle = NULL;
     i2c_new_master_bus(&i2c_bus_config, &i2c_bus_handle);
     esp_event_loop_create_default();
     esp_event_handler_instance_register(ZH_PCF8574, ESP_EVENT_ANY_ID, &zh_pcf8574_event_handler, NULL, NULL);
