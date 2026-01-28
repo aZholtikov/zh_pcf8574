@@ -26,6 +26,8 @@ For correct operation, please enable the following settings in the menuconfig:
 
 ```text
 GPIO_CTRL_FUNC_IN_IRAM
+I2C_ISR_IRAM_SAFE
+I2C_MASTER_ISR_HANDLER_IN_IRAM
 ```
 
 ## Dependencies
