@@ -112,8 +112,8 @@ extern "C"
      */
     typedef struct
     {
-        uint8_t i2c_address;               /*!< The i2c address of PCF8574 expander that caused the interrupt. */
         zh_pcf8574_gpio_num_t gpio_number; /*!< The GPIO that caused the interrupt. */
+        uint8_t i2c_address;               /*!< The i2c address of PCF8574 expander that caused the interrupt. */
         bool gpio_level;                   /*!< The GPIO level that caused the interrupt. */
     } zh_pcf8574_event_on_isr_t;
 
