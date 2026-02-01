@@ -96,6 +96,10 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle)
             _interrupt_gpio = GPIO_NUM_MAX;
         }
     }
+    if (handle->system != NULL)
+    {
+        heap_caps_free(handle->system);
+    }
     i2c_master_bus_rm_device(handle->dev_handle);
     handle->is_initialized = false;
     for (uint8_t i = 0; i < sizeof(_i2c_matrix); ++i)
