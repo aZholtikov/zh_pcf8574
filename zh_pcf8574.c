@@ -305,7 +305,6 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
             }
             zh_pcf8574_event_on_isr_t event = {0};
             event.i2c_address = handle->i2c_address;
-            event.gpio_number = 0xFF;
             uint8_t old_reg = handle->gpio_status;
             uint8_t new_reg = 0;
             esp_err_t err = _zh_pcf8574_read_register(handle, &new_reg);
@@ -322,17 +321,14 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
                     {
                         event.gpio_number = j;
                         event.gpio_level = new_reg & _gpio_matrix[j];
+                        err = esp_event_post(ZH_PCF8574, 0, &event, sizeof(event), 1000 / portTICK_PERIOD_MS);
+                        if (err != ESP_OK)
+                        {
+                            ++_stats.event_post_error;
+                            ZH_LOGE("PCF8574 isr processing failed. Failed to post interrupt event.", err);
+                            continue;
+                        }
                     }
-                }
-            }
-            if (event.gpio_number != 0xFF)
-            {
-                err = esp_event_post(ZH_PCF8574, 0, &event, sizeof(event), 1000 / portTICK_PERIOD_MS);
-                if (err != ESP_OK)
-                {
-                    ++_stats.event_post_error;
-                    ZH_LOGE("PCF8574 isr processing failed. Failed to post interrupt event.", err);
-                    continue;
                 }
             }
         }
