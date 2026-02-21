@@ -214,14 +214,17 @@ static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *con
 
 static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t *handle) // -V2008
 {
+    uint8_t reg_temp = 0;
     if (_interrupt_gpio != GPIO_NUM_MAX)
     {
+        _zh_pcf8574_read_register(handle, &reg_temp);
         esp_err_t err = zh_vector_push_back(&_vector, handle);
         ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed add item to vector.")
         return ESP_OK;
     }
     esp_err_t err = zh_vector_init(&_vector, sizeof(zh_pcf8574_handle_t));
     ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed create vector.")
+    _zh_pcf8574_read_register(handle, &reg_temp);
     err = zh_vector_push_back(&_vector, handle);
     ZH_ERROR_CHECK(err == ESP_OK, err, zh_vector_free(&_vector), "Failed add item to vector.")
     gpio_config_t interrupt_gpio_config = {
