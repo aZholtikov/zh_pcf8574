@@ -328,6 +328,7 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
                     {
                         event.gpio_number = j;
                         event.gpio_level = new_reg & _gpio_matrix[j];
+                        event.interrupt_time = esp_timer_get_time();
                         err = esp_event_post(ZH_PCF8574, 0, &event, sizeof(event), 1000 / portTICK_PERIOD_MS);
                         if (err != ESP_OK)
                         {

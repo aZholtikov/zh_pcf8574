@@ -6,6 +6,7 @@
 
 #include "esp_log.h"
 #include "driver/gpio.h"
+#include "esp_timer.h"
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -112,6 +113,7 @@ extern "C"
      */
     typedef struct
     {
+        uint64_t interrupt_time;           /*!< Interrupt time. */
         zh_pcf8574_gpio_num_t gpio_number; /*!< The GPIO that caused the interrupt. */
         uint8_t i2c_address;               /*!< The i2c address of PCF8574 expander that caused the interrupt. */
         bool gpio_level;                   /*!< The GPIO level that caused the interrupt. */

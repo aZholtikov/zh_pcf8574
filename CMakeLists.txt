@@ -1,1 +1,1 @@
-idf_component_register(SRCS "zh_pcf8574.c" INCLUDE_DIRS "include" REQUIRES driver esp_event zh_vector)
+idf_component_register(SRCS "zh_pcf8574.c" INCLUDE_DIRS "include" REQUIRES driver esp_timer esp_event zh_vector)
