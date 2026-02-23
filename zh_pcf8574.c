@@ -57,6 +57,10 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
         ZH_ERROR_CHECK(err == ESP_OK, err, i2c_master_bus_rm_device(handle->dev_handle); gpio_isr_handler_remove((gpio_num_t)config->interrupt_gpio);
                        gpio_reset_pin((gpio_num_t)config->interrupt_gpio); zh_vector_free(&_vector); vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
     }
+    if (_stats.min_stack_size == 0)
+    {
+        _stats.min_stack_size = config->stack_size;
+    }
     handle->is_initialized = true;
     for (uint8_t i = 0; i < sizeof(_i2c_matrix); ++i)
     {
