@@ -2,7 +2,7 @@
 
 ## Tested on
 
-1. [ESP32 ESP-IDF v5.5.2](https://docs.espressif.com/projects/esp-idf/en/v5.5.2/esp32/index.html)
+1. [ESP32 ESP-IDF v5.5.3](https://docs.espressif.com/projects/esp-idf/en/v5.5.3/esp32/index.html)
 
 ## SAST Tools
 
@@ -133,6 +133,7 @@ void app_main(void)
 void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     zh_pcf8574_event_on_isr_t *event = event_data;
-    printf("Interrupt happened on device address 0x%02X on GPIO number %d at level %d.\n", event->i2c_address, event->gpio_number, event->gpio_level);
+    printf("Interrupt happened on device address 0x%02X on GPIO number %d at level %d at time %lld.\n", event->i2c_address, event->gpio_number,
+           event->gpio_level, event->interrupt_time);
 }
 ```
