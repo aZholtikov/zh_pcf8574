@@ -32,7 +32,7 @@ I2C_MASTER_ISR_HANDLER_IN_IRAM
 
 ## Dependencies
 
-1. [zh_vector](http://git.zh.com.ru/esp_components/zh_vector)
+1. [zh_vector](https://github.com/aZholtikov/zh_vector)
 
 ## Using
 
@@ -40,8 +40,8 @@ In an existing project, run the following command to install the components:
 
 ```text
 cd ../your_project/components
-git clone http://git.zh.com.ru/esp_components/zh_pcf8574
-git clone http://git.zh.com.ru/esp_components/zh_vector
+git clone https://github.com/aZholtikov/zh_pcf8574
+git clone https://github.com/aZholtikov/zh_vector
 ```
 
 In the application, add the component:
