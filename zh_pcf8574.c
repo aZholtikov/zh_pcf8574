@@ -224,6 +224,7 @@ void zh_pcf8574_reset_stats(void)
 static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *config) // -V2008
 {
     ZH_ERROR_CHECK((config->i2c_address >= 0x20 && config->i2c_address <= 0x27) || (config->i2c_address >= 0x38 && config->i2c_address <= 0x3F), ESP_ERR_INVALID_ARG, NULL, "Invalid I2C address.");
+    ZH_ERROR_CHECK(config->i2c_frequency <= 100000, ESP_ERR_INVALID_ARG, NULL, "Invalid I2C frequency.");
     ZH_ERROR_CHECK(config->task_priority >= 1 && config->stack_size >= configMINIMAL_STACK_SIZE, ESP_ERR_INVALID_ARG, NULL, "Invalid task settings.");
     ZH_ERROR_CHECK(config->interrupt_gpio <= GPIO_NUM_MAX, ESP_ERR_INVALID_ARG, NULL, "Invalid GPIO number.");
     ZH_ERROR_CHECK(config->i2c_handle != NULL, ESP_ERR_INVALID_ARG, NULL, "Invalid I2C handle.");
@@ -279,7 +280,7 @@ static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, zh
     i2c_device_config_t pcf8574_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = config->i2c_address,
-        .scl_speed_hz = 100000,
+        .scl_speed_hz = config->i2c_frequency,
     };
     i2c_master_dev_handle_t _dev_handle = NULL;
     esp_err_t err = i2c_master_bus_add_device(config->i2c_handle, &pcf8574_config, &_dev_handle);

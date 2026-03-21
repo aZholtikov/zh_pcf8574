@@ -26,6 +26,7 @@
         .task_priority = 1,                          \
         .stack_size = configMINIMAL_STACK_SIZE,      \
         .i2c_address = 0xFF,                         \
+        .i2c_frequency = 100000,                     \
         .p0_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
         .p1_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
         .p2_gpio_work_mode = ZH_PCF8574_GPIO_OUTPUT, \
@@ -65,6 +66,7 @@ extern "C"
     typedef struct
     {
         i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
+        uint32_t i2c_frequency;             /*!< Expander I2C frequency. */
         uint16_t stack_size;                /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is configMINIMAL_STACK_SIZE. */
         uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note Minimum value is 1. */
         uint8_t i2c_address;                /*!< Expander I2C address. */
