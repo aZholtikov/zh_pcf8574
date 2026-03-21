@@ -64,8 +64,9 @@ extern "C"
      */
     typedef struct
     {
-        uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note Minimum value is 1. */
+        i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
         uint16_t stack_size;                /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is configMINIMAL_STACK_SIZE. */
+        uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note Minimum value is 1. */
         uint8_t i2c_address;                /*!< Expander I2C address. */
         bool p0_gpio_work_mode;             /*!< Expander GPIO PO work mode. */
         bool p1_gpio_work_mode;             /*!< Expander GPIO P1 work mode. */
@@ -76,7 +77,6 @@ extern "C"
         bool p6_gpio_work_mode;             /*!< Expander GPIO P6 work mode. */
         bool p7_gpio_work_mode;             /*!< Expander GPIO P7 work mode. */
         gpio_num_t interrupt_gpio;          /*!< Interrupt GPIO. @attention Must be same for all PCF8574 expanders. */
-        i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
     } zh_pcf8574_init_config_t;
 
     /**
