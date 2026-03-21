@@ -16,7 +16,7 @@ static const char *TAG = "zh_pcf8574";
 TaskHandle_t zh_pcf8574 = NULL;
 static SemaphoreHandle_t _interrupt_semaphore = NULL;
 
-volatile static uint8_t _interrupt_gpio = GPIO_NUM_MAX;
+volatile static gpio_num_t _interrupt_gpio = GPIO_NUM_MAX;
 volatile static uint8_t _i2c_matrix[16] = {0};
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static zh_pcf8574_stats_t _stats = {0};

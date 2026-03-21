@@ -75,7 +75,7 @@ extern "C"
         bool p5_gpio_work_mode;             /*!< Expander GPIO P5 work mode. */
         bool p6_gpio_work_mode;             /*!< Expander GPIO P6 work mode. */
         bool p7_gpio_work_mode;             /*!< Expander GPIO P7 work mode. */
-        uint8_t interrupt_gpio;             /*!< Interrupt GPIO. @attention Must be same for all PCF8574 expanders. */
+        gpio_num_t interrupt_gpio;          /*!< Interrupt GPIO. @attention Must be same for all PCF8574 expanders. */
         i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
     } zh_pcf8574_init_config_t;
 
