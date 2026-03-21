@@ -106,9 +106,9 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle) // -V2008
         ZH_ERROR_CHECK(vector_size != ESP_FAIL, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get size fail.");
         if (vector_size == 0)
         {
-            esp_err_t err = gpio_isr_handler_remove((gpio_num_t)_interrupt_gpio);
+            esp_err_t err = gpio_isr_handler_remove(_interrupt_gpio);
             ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Remove gpio isr handler failed.");
-            err = gpio_reset_pin((gpio_num_t)_interrupt_gpio);
+            err = gpio_reset_pin(_interrupt_gpio);
             ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Reset gpio failed.");
             err = zh_vector_free(&_vector);
             ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Free vector failed.");
