@@ -1,1 +1,6 @@
-idf_component_register(SRCS "zh_pcf8574.c" INCLUDE_DIRS "include" REQUIRES driver esp_timer esp_event zh_vector)
+if(${IDF_VERSION_MAJOR} STREQUAL 6)
+    set(requires esp_driver_gpio esp_driver_i2c esp_timer esp_event zh_vector)
+else()
+    set(requires driver esp_timer esp_event zh_vector)
+endif()
+idf_component_register(SRCS "zh_pcf8574.c" INCLUDE_DIRS "include" REQUIRES ${requires})
