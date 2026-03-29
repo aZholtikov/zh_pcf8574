@@ -40,30 +40,25 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
     ZH_LOGI("PCF8574 initialization started.");
     ZH_ERROR_CHECK(config != NULL && handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 initialization failed. Invalid argument.");
     ZH_ERROR_CHECK(handle->is_initialized == false, ESP_ERR_INVALID_STATE, NULL, "PCF8574 initialization failed. PCF8574 is already initialized.");
-    esp_err_t err = _zh_pcf8574_validate_config(config);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 initialization failed. Initial configuration check failed.");
-    err = _zh_pcf8574_i2c_init(config, handle);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 initialization failed. Failed to add I2C device.");
-    err = _zh_pcf8574_write_register(handle, handle->gpio_work_mode);
-    ZH_ERROR_CHECK(err == ESP_OK, err, err = i2c_master_bus_rm_device(handle->dev_handle);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C remove device failed."), "PCF8574 initialization failed. Failed extender initial GPIO setup.");
+    ZH_ERROR_CHECK(_zh_pcf8574_validate_config(config) == ESP_OK, ESP_FAIL, NULL, "PCF8574 initialization failed. Initial configuration check failed.");
+    ZH_ERROR_CHECK(_zh_pcf8574_i2c_init(config, handle) == ESP_OK, ESP_FAIL, NULL, "PCF8574 initialization failed. Failed to add I2C device.");
+    ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, handle->gpio_work_mode) == ESP_OK, ESP_FAIL,
+                   ZH_ERROR_CHECK(i2c_master_bus_rm_device(handle->dev_handle) == ESP_OK, ESP_FAIL, NULL, "I2C remove device failed."), "PCF8574 initialization failed. Failed extender initial GPIO setup.");
     if (config->interrupt_gpio < GPIO_NUM_MAX && handle->gpio_work_mode != 0)
     {
-        err = _zh_pcf8574_gpio_init(config, handle);
-        ZH_ERROR_CHECK(err == ESP_OK, err, err = i2c_master_bus_rm_device(handle->dev_handle);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C remove device failed."), "PCF8574 initialization failed. Interrupt GPIO initialization failed.");
-        err = _zh_pcf8574_resources_init(config);
-        ZH_ERROR_CHECK(err == ESP_OK, err, err = i2c_master_bus_rm_device(handle->dev_handle);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C remove device failed."); err = gpio_isr_handler_remove(config->interrupt_gpio);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Remove gpio isr handler failed."); err = gpio_reset_pin(config->interrupt_gpio);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Reset gpio failed."); err = zh_vector_free(&_vector);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Free vector failed."), "PCF8574 initialization failed. Resources initialization failed.");
-        err = _zh_pcf8574_task_init(config);
-        ZH_ERROR_CHECK(err == ESP_OK, err, err = i2c_master_bus_rm_device(handle->dev_handle);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C remove device failed."); err = gpio_isr_handler_remove(config->interrupt_gpio);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Remove gpio isr handler failed."); err = gpio_reset_pin(config->interrupt_gpio);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Reset gpio failed."); err = zh_vector_free(&_vector);
-                       ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Free vector failed."); vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
+        ZH_ERROR_CHECK(_zh_pcf8574_gpio_init(config, handle) == ESP_OK, ESP_FAIL,
+                       ZH_ERROR_CHECK(i2c_master_bus_rm_device(handle->dev_handle) == ESP_OK, ESP_FAIL, NULL, "I2C remove device failed."), "PCF8574 initialization failed. Interrupt GPIO initialization failed.");
+        ZH_ERROR_CHECK(_zh_pcf8574_resources_init(config) == ESP_OK, ESP_FAIL,
+                       ZH_ERROR_CHECK(i2c_master_bus_rm_device(handle->dev_handle) == ESP_OK, ESP_FAIL, NULL, "I2C remove device failed.");
+                       ZH_ERROR_CHECK(gpio_isr_handler_remove(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Remove GPIO isr handler failed.");
+                       ZH_ERROR_CHECK(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Reset GPIO failed.");
+                       ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed."), "PCF8574 initialization failed. Resources initialization failed.");
+        ZH_ERROR_CHECK(_zh_pcf8574_task_init(config) == ESP_OK, ESP_FAIL,
+                       ZH_ERROR_CHECK(i2c_master_bus_rm_device(handle->dev_handle) == ESP_OK, ESP_FAIL, NULL, "I2C remove device failed.");
+                       ZH_ERROR_CHECK(gpio_isr_handler_remove(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Remove gpio isr handler failed.");
+                       ZH_ERROR_CHECK(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Reset gpio failed.");
+                       ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed.");
+                       vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
     }
     if (_stats.min_stack_size == 0)
     {
@@ -97,8 +92,7 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle) // -V2008
             ZH_ERROR_CHECK(temp_handle != NULL, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get item fail.");
             if (handle->i2c_address == temp_handle->i2c_address)
             {
-                esp_err_t err = zh_vector_delete_item(&_vector, i);
-                ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Vector delete item fail.");
+                ZH_ERROR_CHECK(zh_vector_delete_item(&_vector, i) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Vector delete item fail.");
                 break;
             }
         }
@@ -106,12 +100,9 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle) // -V2008
         ZH_ERROR_CHECK(vector_size != ESP_FAIL, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get size fail.");
         if (vector_size == 0)
         {
-            esp_err_t err = gpio_isr_handler_remove(_interrupt_gpio);
-            ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Remove gpio isr handler failed.");
-            err = gpio_reset_pin(_interrupt_gpio);
-            ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Reset gpio failed.");
-            err = zh_vector_free(&_vector);
-            ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. Free vector failed.");
+            ZH_ERROR_CHECK(gpio_isr_handler_remove(_interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Remove GPIO isr handler failed.");
+            ZH_ERROR_CHECK(gpio_reset_pin(_interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Reset GPIO failed.");
+            ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Free vector failed.");
             vSemaphoreDelete(_interrupt_semaphore);
             vTaskDelete(zh_pcf8574);
             _interrupt_gpio = GPIO_NUM_MAX;
@@ -121,8 +112,7 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle) // -V2008
     {
         heap_caps_free(handle->system);
     }
-    esp_err_t err = i2c_master_bus_rm_device(handle->dev_handle);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 deinitialization failed. I2C remove device failed.");
+    ZH_ERROR_CHECK(i2c_master_bus_rm_device(handle->dev_handle) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. I2C remove device failed.");
     handle->is_initialized = false;
     for (uint8_t i = 0; i < sizeof(_i2c_matrix); ++i)
     {
@@ -141,8 +131,7 @@ esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t *handle, uint8_t *reg)
     ZH_LOGI("PCF8574 read register started.");
     ZH_ERROR_CHECK(handle != NULL && reg != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read register failed. Invalid argument.");
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 read register failed. PCF8574 not initialized.");
-    esp_err_t err = _zh_pcf8574_read_register(handle, reg);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 read register failed.");
+    ZH_ERROR_CHECK(_zh_pcf8574_read_register(handle, reg) == ESP_OK, ESP_FAIL, NULL, "PCF8574 read register failed.");
     ZH_LOGI("PCF8574 read register completed successfully.");
     return ESP_OK;
 }
@@ -152,8 +141,7 @@ esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t *handle, uint8_t reg)
     ZH_LOGI("PCF8574 write register started.");
     ZH_ERROR_CHECK(handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 write register failed. Invalid argument.");
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 write register failed. PCF8574 not initialized.");
-    esp_err_t err = _zh_pcf8574_write_register(handle, (reg | handle->gpio_work_mode));
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 write register failed.");
+    ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, (reg | handle->gpio_work_mode)) == ESP_OK, ESP_FAIL, NULL, "PCF8574 write register failed.");
     ZH_LOGI("PCF8574 write register completed successfully.");
     return ESP_OK;
 }
@@ -163,8 +151,7 @@ esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t *handle)
     ZH_LOGI("PCF8574 reset register started.");
     ZH_ERROR_CHECK(handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 reset register failed. Invalid argument.");
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 reset register failed. PCF8574 not initialized.");
-    esp_err_t err = _zh_pcf8574_write_register(handle, handle->gpio_work_mode);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 reset register failed.");
+    ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, handle->gpio_work_mode) == ESP_OK, ESP_FAIL, NULL, "PCF8574 reset register failed.");
     ZH_LOGI("PCF8574 reset register completed successfully.");
     return ESP_OK;
 }
@@ -177,8 +164,7 @@ esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 read GPIO failed. PCF8574 not initialized.");
     uint8_t gpio_temp = _gpio_matrix[gpio];
     uint8_t reg_temp = 0;
-    esp_err_t err = _zh_pcf8574_read_register(handle, &reg_temp);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 read GPIO failed.");
+    ZH_ERROR_CHECK(_zh_pcf8574_read_register(handle, &reg_temp) == ESP_OK, ESP_FAIL, NULL, "PCF8574 read GPIO failed.");
     *status = ((reg_temp & gpio_temp) ? 1 : 0);
     ZH_LOGI("PCF8574 read GPIO completed successfully.");
     return ESP_OK;
@@ -191,16 +177,14 @@ esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num
     ZH_ERROR_CHECK(gpio >= ZH_PCF8574_GPIO_NUM_P0 && gpio < ZH_PCF8574_GPIO_NUM_MAX, ESP_FAIL, NULL, "PCF8574 write GPIO failed. Invalid GPIO number.")
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_NOT_FOUND, NULL, "PCF8574 write GPIO failed. PCF8574 not initialized.");
     uint8_t gpio_temp = _gpio_matrix[gpio];
-    esp_err_t err = ESP_OK;
     if (status == true)
     {
-        err = _zh_pcf8574_write_register(handle, handle->gpio_status | handle->gpio_work_mode | gpio_temp);
+        ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, handle->gpio_status | handle->gpio_work_mode | gpio_temp) == ESP_OK, ESP_FAIL, NULL, "PCF8574 write GPIO failed.");
     }
     else
     {
-        err = _zh_pcf8574_write_register(handle, (handle->gpio_status ^ gpio_temp) | handle->gpio_work_mode);
+        ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, (handle->gpio_status ^ gpio_temp) | handle->gpio_work_mode) == ESP_OK, ESP_FAIL, NULL, "PCF8574 write GPIO failed.");
     }
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "PCF8574 write GPIO failed.");
     ZH_LOGI("PCF8574 write GPIO completed successfully.");
     return ESP_OK;
 }
@@ -240,19 +224,14 @@ static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config, z
     uint8_t reg_temp = 0;
     if (_interrupt_gpio != GPIO_NUM_MAX)
     {
-        esp_err_t err = _zh_pcf8574_read_register(handle, &reg_temp);
-        ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed to read expander register.");
-        err = zh_vector_push_back(&_vector, handle);
-        ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed add item to vector.")
+        ZH_ERROR_CHECK(_zh_pcf8574_read_register(handle, &reg_temp) == ESP_OK, ESP_FAIL, NULL, "Failed to read expander register.");
+        ZH_ERROR_CHECK(zh_vector_push_back(&_vector, handle) == ESP_OK, ESP_FAIL, NULL, "Failed add item to vector.")
         return ESP_OK;
     }
-    esp_err_t err = zh_vector_init(&_vector, sizeof(zh_pcf8574_handle_t));
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed create vector.")
-    err = _zh_pcf8574_read_register(handle, &reg_temp);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed to read expander register.");
-    err = zh_vector_push_back(&_vector, handle);
-    ZH_ERROR_CHECK(err == ESP_OK, err, err = zh_vector_free(&_vector);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Free vector failed."), "Failed add item to vector.")
+    ZH_ERROR_CHECK(zh_vector_init(&_vector, sizeof(zh_pcf8574_handle_t)) == ESP_OK, ESP_FAIL, NULL, "Failed create vector.")
+    ZH_ERROR_CHECK(_zh_pcf8574_read_register(handle, &reg_temp) == ESP_OK, ESP_FAIL, NULL, "Failed to read expander register.");
+    ZH_ERROR_CHECK(zh_vector_push_back(&_vector, handle) == ESP_OK, ESP_FAIL,
+                   ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed."), "Failed add item to vector.")
     gpio_config_t interrupt_gpio_config = {
         .intr_type = GPIO_INTR_NEGEDGE,
         .mode = GPIO_MODE_INPUT,
@@ -260,17 +239,15 @@ static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config, z
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .pull_up_en = GPIO_PULLUP_ENABLE,
     };
-    err = gpio_config(&interrupt_gpio_config);
-    ZH_ERROR_CHECK(err == ESP_OK, err, err = zh_vector_free(&_vector);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Free vector failed."), "GPIO configuration failed.")
-    err = gpio_install_isr_service(ESP_INTR_FLAG_LOWMED);
-    ZH_ERROR_CHECK(err == ESP_OK || err == ESP_ERR_INVALID_STATE, err, err = gpio_reset_pin(config->interrupt_gpio);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Reset gpio failed."); err = zh_vector_free(&_vector);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Free vector failed."), "Failed install isr service.")
-    err = gpio_isr_handler_add(config->interrupt_gpio, _zh_pcf8574_isr_handler, NULL);
-    ZH_ERROR_CHECK(err == ESP_OK, err, err = gpio_reset_pin(config->interrupt_gpio);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Reset gpio failed."); err = zh_vector_free(&_vector);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Free vector failed."), "Failed add isr handler.")
+    ZH_ERROR_CHECK(gpio_config(&interrupt_gpio_config) == ESP_OK, ESP_FAIL,
+                   ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed."), "GPIO configuration failed.")
+    esp_err_t err = gpio_install_isr_service(ESP_INTR_FLAG_LOWMED);
+    ZH_ERROR_CHECK(err == ESP_OK || err == ESP_ERR_INVALID_STATE, ESP_FAIL,
+                   ZH_ERROR_CHECK(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Reset gpio failed.");
+                   ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed."), "Failed install isr service.")
+    ZH_ERROR_CHECK(gpio_isr_handler_add(config->interrupt_gpio, _zh_pcf8574_isr_handler, NULL) == ESP_OK, ESP_FAIL,
+                   ZH_ERROR_CHECK(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Reset gpio failed.");
+                   ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed."), "Failed add isr handler.")
     _interrupt_gpio = config->interrupt_gpio;
     return ESP_OK;
 }
@@ -283,11 +260,9 @@ static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, zh
         .scl_speed_hz = config->i2c_frequency,
     };
     i2c_master_dev_handle_t _dev_handle = NULL;
-    esp_err_t err = i2c_master_bus_add_device(config->i2c_handle, &pcf8574_config, &_dev_handle);
-    ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "Failed to add I2C device.");
-    err = i2c_master_probe(config->i2c_handle, config->i2c_address, 1000 / portTICK_PERIOD_MS);
-    ZH_ERROR_CHECK(err == ESP_OK, err, err = i2c_master_bus_rm_device(_dev_handle);
-                   ZH_ERROR_CHECK(err == ESP_OK, err, NULL, "I2C remove device failed."), "Expander not connected or not responding.");
+    ZH_ERROR_CHECK(i2c_master_bus_add_device(config->i2c_handle, &pcf8574_config, &_dev_handle) == ESP_OK, ESP_FAIL, NULL, "Failed to add I2C device.");
+    ZH_ERROR_CHECK(i2c_master_probe(config->i2c_handle, config->i2c_address, 1000 / portTICK_PERIOD_MS) == ESP_OK, ESP_FAIL,
+                   ZH_ERROR_CHECK(i2c_master_bus_rm_device(_dev_handle) == ESP_OK, ESP_FAIL, NULL, "I2C remove device failed."), "Expander not connected or not responding.");
     handle->dev_handle = _dev_handle;
     handle->gpio_work_mode = (config->p7_gpio_work_mode << 7) | (config->p6_gpio_work_mode << 6) | (config->p5_gpio_work_mode << 5) |
                              (config->p4_gpio_work_mode << 4) | (config->p3_gpio_work_mode << 3) | (config->p2_gpio_work_mode << 2) |
@@ -306,8 +281,8 @@ static esp_err_t _zh_pcf8574_resources_init(const zh_pcf8574_init_config_t *conf
 
 static esp_err_t _zh_pcf8574_task_init(const zh_pcf8574_init_config_t *config)
 {
-    BaseType_t err = xTaskCreatePinnedToCore(&_zh_pcf8574_isr_processing_task, "zh_pcf8574_isr_processing_task", config->stack_size, NULL, config->task_priority, &zh_pcf8574, tskNO_AFFINITY);
-    ZH_ERROR_CHECK(err == pdPASS, err, NULL, "Failed to create isr processing task.")
+    ZH_ERROR_CHECK(xTaskCreatePinnedToCore(&_zh_pcf8574_isr_processing_task, "zh_pcf8574_isr_processing_task", config->stack_size, NULL, config->task_priority, &zh_pcf8574, tskNO_AFFINITY) == pdPASS,
+                   ESP_FAIL, NULL, "Failed to create isr processing task.")
     return ESP_OK;
 }
 
@@ -384,16 +359,16 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
 
 static esp_err_t _zh_pcf8574_read_register(zh_pcf8574_handle_t *handle, uint8_t *reg)
 {
-    esp_err_t err = i2c_master_receive(handle->dev_handle, &handle->gpio_status, sizeof(handle->gpio_status), 1000 / portTICK_PERIOD_MS);
-    ZH_ERROR_CHECK(err == ESP_OK, err, ++_stats.i2c_driver_error, "I2C driver error.");
+    ZH_ERROR_CHECK(i2c_master_receive(handle->dev_handle, &handle->gpio_status, sizeof(handle->gpio_status), 1000 / portTICK_PERIOD_MS) == ESP_OK, ESP_FAIL,
+                   ++_stats.i2c_driver_error, "I2C driver error.");
     *reg = handle->gpio_status;
     return ESP_OK;
 }
 
 static esp_err_t _zh_pcf8574_write_register(zh_pcf8574_handle_t *handle, uint8_t reg)
 {
-    esp_err_t err = i2c_master_transmit(handle->dev_handle, &reg, sizeof(reg), 1000 / portTICK_PERIOD_MS);
-    ZH_ERROR_CHECK(err == ESP_OK, err, ++_stats.i2c_driver_error, "I2C driver error.");
+    ZH_ERROR_CHECK(i2c_master_transmit(handle->dev_handle, &reg, sizeof(reg), 1000 / portTICK_PERIOD_MS) == ESP_OK, ESP_FAIL,
+                   ++_stats.i2c_driver_error, "I2C driver error.");
     handle->gpio_status = reg;
     return ESP_OK;
 }
