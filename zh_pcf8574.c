@@ -59,6 +59,7 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
                        ZH_ERROR_CHECK(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Reset gpio failed.");
                        ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed.");
                        vSemaphoreDelete(_interrupt_semaphore), "PCF8574 initialization failed. Task initialization failed.");
+        _interrupt_gpio = config->interrupt_gpio;
     }
     if (_stats.min_stack_size == 0)
     {
@@ -248,7 +249,6 @@ static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config, z
     ZH_ERROR_CHECK(gpio_isr_handler_add(config->interrupt_gpio, _zh_pcf8574_isr_handler, NULL) == ESP_OK, ESP_FAIL,
                    ZH_ERROR_CHECK(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "Reset gpio failed.");
                    ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "Free vector failed."), "Failed add isr handler.")
-    _interrupt_gpio = config->interrupt_gpio;
     return ESP_OK;
 }
 
@@ -274,15 +274,21 @@ static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, zh
 
 static esp_err_t _zh_pcf8574_resources_init(const zh_pcf8574_init_config_t *config)
 {
-    _interrupt_semaphore = xSemaphoreCreateBinary();
-    ZH_ERROR_CHECK(_interrupt_semaphore != NULL, ESP_ERR_NO_MEM, NULL, "Failed to create semaphore.")
+    if (_interrupt_gpio == GPIO_NUM_MAX)
+    {
+        _interrupt_semaphore = xSemaphoreCreateBinary();
+        ZH_ERROR_CHECK(_interrupt_semaphore != NULL, ESP_ERR_NO_MEM, NULL, "Failed to create semaphore.")
+    }
     return ESP_OK;
 }
 
 static esp_err_t _zh_pcf8574_task_init(const zh_pcf8574_init_config_t *config)
 {
-    ZH_ERROR_CHECK(xTaskCreatePinnedToCore(&_zh_pcf8574_isr_processing_task, "zh_pcf8574_isr_processing_task", config->stack_size, NULL, config->task_priority, &zh_pcf8574, tskNO_AFFINITY) == pdPASS,
-                   ESP_FAIL, NULL, "Failed to create isr processing task.")
+    if (_interrupt_gpio == GPIO_NUM_MAX)
+    {
+        ZH_ERROR_CHECK(xTaskCreatePinnedToCore(&_zh_pcf8574_isr_processing_task, "zh_pcf8574_isr_processing_task", config->stack_size, NULL, config->task_priority, &zh_pcf8574, tskNO_AFFINITY) == pdPASS,
+                       ESP_FAIL, NULL, "Failed to create isr processing task.")
+    }
     return ESP_OK;
 }
 
