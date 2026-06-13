@@ -1,5 +1,9 @@
 # ESP32 ESP-IDF component for PCF8574(A) 8-bit I/O expander
 
+## Wiki
+
+[EN](WIKI_EN.md) | [RU](WIKI_RU.md)
+
 ## Tested on
 
 1. [ESP32 ESP-IDF v6.0.0](https://docs.espressif.com/projects/esp-idf/en/v6.0/esp32/index.html)
@@ -41,7 +45,6 @@ In an existing project, run the following command to install the components:
 ```text
 cd ../your_project/components
 git clone https://github.com/aZholtikov/zh_pcf8574
-git clone https://github.com/aZholtikov/zh_vector
 ```
 
 In the application, add the component:
