@@ -345,6 +345,7 @@ void print_gpio_status(const char *message, uint8_t reg)
 void app_main(void)
 {
     esp_log_level_set("zh_pcf8574", ESP_LOG_ERROR);
+    esp_log_level_set("zh_vector", ESP_LOG_ERROR);
     i2c_master_bus_config_t i2c_bus_config = {
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .i2c_port = I2C_PORT,
@@ -408,6 +409,7 @@ void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t ev
 void app_main(void)
 {
     esp_log_level_set("zh_pcf8574", ESP_LOG_ERROR);
+    esp_log_level_set("zh_vector", ESP_LOG_ERROR);
     i2c_master_bus_config_t i2c_bus_config = {
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .i2c_port = I2C_PORT,
