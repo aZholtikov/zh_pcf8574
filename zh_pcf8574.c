@@ -184,7 +184,7 @@ esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num
     }
     else
     {
-        ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, (handle->gpio_status ^ gpio_temp) | handle->gpio_work_mode) == ESP_OK, ESP_FAIL, NULL, "PCF8574 write GPIO failed.");
+        ZH_ERROR_CHECK(_zh_pcf8574_write_register(handle, (handle->gpio_status & ~gpio_temp) | handle->gpio_work_mode) == ESP_OK, ESP_FAIL, NULL, "PCF8574 write GPIO failed.");
     }
     ZH_LOGI("PCF8574 write GPIO completed successfully.");
     return ESP_OK;

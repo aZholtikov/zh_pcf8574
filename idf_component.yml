@@ -1,6 +1,6 @@
 description: ESP32 ESP-IDF component for PCF8574(A) 8-bit I/O expander
 url: https://github.com/aZholtikov/zh_pcf8574
-version: "2.8.1"
+version: "2.8.2"
 license: "Apache-2.0"
 maintainers:
   - "Alexey Zholtikov <alexey.zholtikov@yandex.ru>"
