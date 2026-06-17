@@ -519,4 +519,4 @@ limitations under the License.
 
 ---
 
-*Generated for zh_pcf8574 v2.8.1*
+*Generated for zh_pcf8574 v2.8.2*
