@@ -21,7 +21,7 @@ volatile static uint8_t _i2c_matrix[16] = {0};
 static const uint8_t _gpio_matrix[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 static zh_pcf8574_stats_t _stats = {0};
 
-static zh_vector_t _vector = {0};
+static zh_vector_t *_vector = NULL;
 
 static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *config);
 static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t *handle);
@@ -85,20 +85,19 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle) // -V2008
     ZH_ERROR_CHECK(handle->is_initialized == true, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. PCF8574 not initialized.");
     if (_interrupt_gpio < GPIO_NUM_MAX && handle->gpio_work_mode != 0)
     {
-        int16_t vector_size = (int16_t)zh_vector_get_size(&_vector);
-        ZH_ERROR_CHECK(vector_size != ESP_FAIL, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get size fail.");
+        uint16_t vector_size = 0;
+        ZH_ERROR_CHECK(zh_vector_get_size(&_vector, &vector_size) == ESP_OK, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get size fail.");
         for (uint16_t i = 0; i < vector_size; ++i)
         {
-            zh_pcf8574_handle_t *temp_handle = zh_vector_get_item(&_vector, i);
-            ZH_ERROR_CHECK(temp_handle != NULL, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get item fail.");
-            if (handle->i2c_address == temp_handle->i2c_address)
+            zh_pcf8574_handle_t temp_handle = {0};
+            ZH_ERROR_CHECK(zh_vector_get_item(&_vector, i, &temp_handle) == ESP_OK, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get item fail.");
+            if (handle->i2c_address == temp_handle.i2c_address)
             {
                 ZH_ERROR_CHECK(zh_vector_delete_item(&_vector, i) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Vector delete item fail.");
                 break;
             }
         }
-        vector_size = (int16_t)zh_vector_get_size(&_vector);
-        ZH_ERROR_CHECK(vector_size != ESP_FAIL, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get size fail.");
+        ZH_ERROR_CHECK(zh_vector_get_size(&_vector, &vector_size) == ESP_OK, ESP_ERR_INVALID_STATE, NULL, "PCF8574 deinitialization failed. Vector get size fail.");
         if (vector_size == 0)
         {
             ZH_ERROR_CHECK(gpio_isr_handler_remove(_interrupt_gpio) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Remove GPIO isr handler failed.");
@@ -310,8 +309,8 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
     for (;;)
     {
         xSemaphoreTake(_interrupt_semaphore, portMAX_DELAY);
-        int16_t vector_size = (int16_t)zh_vector_get_size(&_vector);
-        if (vector_size == ESP_FAIL)
+        uint16_t vector_size = 0;
+        if (zh_vector_get_size(&_vector, &vector_size) != ESP_OK)
         {
             ++_stats.vector_error;
             ZH_LOGE("PCF8574 isr processing failed. Failed to get vector size.", ESP_FAIL);
@@ -320,26 +319,34 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
         {
             for (uint16_t i = 0; i < vector_size; ++i)
             {
-                zh_pcf8574_handle_t *handle = zh_vector_get_item(&_vector, i);
-                if (handle == NULL)
+                zh_pcf8574_handle_t handle = {0};
+                esp_err_t err = zh_vector_get_item(&_vector, i, &handle);
+                if (err != ESP_OK)
                 {
                     ++_stats.vector_error;
                     ZH_LOGE("PCF8574 isr processing failed. Failed to get vector item data.", ESP_FAIL);
                     continue;
                 }
                 zh_pcf8574_event_on_isr_t event = {0};
-                event.i2c_address = handle->i2c_address;
-                uint8_t old_reg = handle->gpio_status;
+                event.i2c_address = handle.i2c_address;
+                uint8_t old_reg = handle.gpio_status;
                 uint8_t new_reg = 0;
-                esp_err_t err = _zh_pcf8574_read_register(handle, &new_reg);
+                err = _zh_pcf8574_read_register(&handle, &new_reg);
                 if (err != ESP_OK)
                 {
                     ZH_LOGE("PCF8574 isr processing failed. Failed to read expander register.", err);
                     continue;
                 }
+                err = zh_vector_change_item(&_vector, i, &handle);
+                if (err != ESP_OK)
+                {
+                    ++_stats.vector_error;
+                    ZH_LOGE("PCF8574 isr processing failed. Failed to change vector item data.", ESP_FAIL);
+                    continue;
+                }
                 for (uint8_t j = 0; j <= 7; ++j)
                 {
-                    if ((handle->gpio_work_mode & _gpio_matrix[j]) != 0)
+                    if ((handle.gpio_work_mode & _gpio_matrix[j]) != 0)
                     {
                         if ((old_reg & _gpio_matrix[j]) != (new_reg & _gpio_matrix[j]))
                         {
