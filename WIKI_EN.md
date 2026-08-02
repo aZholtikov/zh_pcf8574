@@ -88,7 +88,7 @@ typedef struct
 {
     i2c_master_bus_handle_t i2c_handle; // Unique I2C bus handle
     uint32_t i2c_frequency;             // I2C frequency of the expander (max 100000 Hz)
-    uint16_t stack_size;                // Stack size for interrupt processing task
+    uint32_t stack_size;                // Stack size for interrupt processing task
     uint8_t task_priority;              // Priority of interrupt processing task
     uint8_t i2c_address;                // I2C address of the expander (0x20-0x27 or 0x38-0x3F)
     bool p0_gpio_work_mode;             // GPIO P0 work mode (false - output, true - input)
@@ -115,16 +115,10 @@ Use `ZH_PCF8574_INIT_CONFIG_DEFAULT()` macro to initialize with default values:
 ### zh_pcf8574_handle_t Structure
 
 ```c
-typedef struct
-{
-    uint8_t i2c_address;                // I2C address of the expander
-    uint8_t gpio_work_mode;             // GPIO work modes (bits 0-7)
-    uint8_t gpio_status;                // Current GPIO status (bits 0-7)
-    bool is_initialized;                // Expander initialization flag
-    i2c_master_dev_handle_t dev_handle; // Unique I2C device handle
-    void *system;                       // System pointer for use in other components
-} zh_pcf8574_handle_t;
+typedef struct _zh_pcf8574_handle_t zh_pcf8574_handle_t;
 ```
+
+Opaque handle for a PCF8574 device instance. The internal structure is minimal, storing only the I2C address — the full device state is maintained in an internal vector.
 
 ---
 
@@ -163,15 +157,16 @@ Initializes the PCF8574 expander.
 
 **Parameters:**
 
-- `config` - Pointer to PCF8574 initialization configuration structure
-- `handle` - Pointer to unique PCF8574 handle
+- `config` - Pointer to PCF8574 initialization configuration structure. Must not be NULL
+- `handle` - Pointer to pointer to PCF8574 handle. Must be NULL
 
 **Returns:**
 
 - `ESP_OK` - Success
 - `ESP_ERR_INVALID_ARG` - Invalid argument (NULL config or handle)
 - `ESP_ERR_INVALID_STATE` - Expander already initialized
-- `ESP_FAIL` - Initialization failed
+- `ESP_ERR_NO_MEM` - Insufficient memory
+- `ESP_ERR_NOT_SUPPORTED` - I2C initialization error
 
 ---
 
@@ -181,14 +176,12 @@ Deinitializes the PCF8574 expander.
 
 **Parameters:**
 
-- `handle` - Pointer to unique PCF8574 handle
+- `handle` - Pointer to pointer to PCF8574 handle. Must not be NULL
 
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle)
-- `ESP_ERR_INVALID_STATE` - Expander not initialized
-- `ESP_FAIL` - Deinitialization failed
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or *handle)
 
 ---
 
@@ -198,15 +191,14 @@ Reads the state of all GPIO pins of the expander.
 
 **Parameters:**
 
-- `handle` - Pointer to unique PCF8574 handle
-- `reg` - Pointer to store GPIO status (bits 0-7)
+- `handle` - Pointer to pointer to PCF8574 handle. Must not be NULL
+- `reg` - Pointer to store GPIO status (bits 0-7). Must not be NULL
 
 **Returns:**
 
 - `ESP_OK` - Success
 - `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or reg)
-- `ESP_ERR_NOT_FOUND` - Expander not initialized
-- `ESP_FAIL` - I2C communication error
+- `ESP_ERR_INVALID_STATE` - Expander not initialized
 
 **Note:** For input GPIOs, the value will always be 1 (HIGH).
 
@@ -218,15 +210,14 @@ Sets the state of all output GPIO pins of the expander.
 
 **Parameters:**
 
-- `handle` - Pointer to unique PCF8574 handle
+- `handle` - Pointer to pointer to PCF8574 handle. Must not be NULL
 - `reg` - GPIO status (bits 0-7)
 
 **Returns:**
 
 - `ESP_OK` - Success
 - `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle)
-- `ESP_ERR_NOT_FOUND` - Expander not initialized
-- `ESP_FAIL` - I2C communication error
+- `ESP_ERR_INVALID_STATE` - Expander not initialized
 
 **Note:** Only output GPIOs are affected.
 
@@ -238,14 +229,12 @@ Resets all GPIO pins of the expander to the initial state.
 
 **Parameters:**
 
-- `handle` - Pointer to unique PCF8574 handle
+- `handle` - Pointer to pointer to PCF8574 handle. Must not be NULL
 
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle)
-- `ESP_ERR_NOT_FOUND` - Expander not initialized
-- `ESP_FAIL` - I2C communication error
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or *handle)
 
 ---
 
@@ -255,16 +244,15 @@ Reads the state of one GPIO pin of the expander.
 
 **Parameters:**
 
-- `handle` - Pointer to unique PCF8574 handle
+- `handle` - Pointer to pointer to PCF8574 handle. Must not be NULL
 - `gpio` - GPIO number (ZH_PCF8574_GPIO_NUM_P0 ... ZH_PCF8574_GPIO_NUM_P7)
-- `status` - Pointer to store GPIO status (true - HIGH, false - LOW)
+- `status` - Pointer to store GPIO status (true - HIGH, false - LOW). Must not be NULL
 
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument
-- `ESP_ERR_NOT_FOUND` - Expander not initialized
-- `ESP_FAIL` - I2C communication error
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle, gpio, status or gpio out of range)
+- `ESP_ERR_INVALID_STATE` - Expander not initialized
 
 **Note:** For input GPIOs, the value will always be 1 (HIGH).
 
@@ -276,16 +264,15 @@ Sets the state of one output GPIO pin of the expander.
 
 **Parameters:**
 
-- `handle` - Pointer to unique PCF8574 handle
+- `handle` - Pointer to pointer to PCF8574 handle. Must not be NULL
 - `gpio` - GPIO number (ZH_PCF8574_GPIO_NUM_P0 ... ZH_PCF8574_GPIO_NUM_P7)
 - `status` - GPIO status (true - HIGH, false - LOW)
 
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument
-- `ESP_ERR_NOT_FOUND` - Expander not initialized
-- `ESP_FAIL` - I2C communication error
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle, gpio, status or gpio out of range)
+- `ESP_ERR_INVALID_STATE` - Expander not initialized
 
 **Note:** Only output GPIOs are affected.
 
@@ -299,24 +286,11 @@ Gets error statistics since last reset.
 
 - Pointer to the statistics structure
 
-**Example:**
-
-```c
-const zh_pcf8574_stats_t *stats = zh_pcf8574_get_stats();
-printf("I2C errors: %ld\n", stats->i2c_driver_error);
-```
-
 ---
 
 ### zh_pcf8574_reset_stats()
 
 Resets error statistics counters.
-
-**Example:**
-
-```c
-zh_pcf8574_reset_stats();
-```
 
 ---
 
@@ -445,7 +419,7 @@ void app_main(void)
 ## Technical Specifications
 
 | Parameter | Value |
-|-----------|-------|
+| ----------- | ------- |
 | **Device Type** | 8-bit I2C GPIO expander |
 | **Models** | PCF8574, PCF8574A |
 | **Number of devices on bus** | Up to 16 (addresses 0x20-0x27, 0x38-0x3F) |
@@ -463,7 +437,7 @@ void app_main(void)
 ## Error Codes
 
 | Error Code | Description |
-|------------|-------------|
+| ------------ | ------------- |
 | `ESP_OK` | Operation successful |
 | `ESP_ERR_INVALID_ARG` | Invalid argument (NULL pointer or invalid configuration) |
 | `ESP_ERR_INVALID_STATE` | Device not initialized or already initialized |
@@ -519,4 +493,4 @@ limitations under the License.
 
 ---
 
-*Generated for zh_pcf8574 v2.8.2*
+"*Generated for zh_pcf8574 v3.0.0*"

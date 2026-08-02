@@ -1,5 +1,22 @@
 /**
  * @file zh_pcf8574.h
+ *
+ * @brief Header file for PCF8574 I2C GPIO expander driver.
+ *
+ * This module provides a driver for the PCF8574 8-bit I2C GPIO
+ * expander, supporting both input and output operations, interrupt
+ * handling, and configuration of individual pin directions.
+ *
+ * Key features:
+ * - I2C communication via esp-idf i2c_master driver
+ * - Configurable GPIO direction for each pin (P0-P7)
+ * - Interrupt handling with GPIO level detection
+ * - Event-based architecture using esp_event framework
+ * - Statistics tracking for debugging and monitoring
+ *
+ * @note The driver creates an internal task for interrupt processing.
+ * @note Requires ESP-IDF v5.0+ with I2C master driver.
+ * @note Enable GPIO_CTRL_FUNC_IN_IRAM, I2C_ISR_IRAM_SAFE and I2C_MASTER_ISR_HANDLER_IN_IRAM in menuconfig.
  */
 
 #pragma once
@@ -13,14 +30,11 @@
 #include "esp_event.h"
 #include "zh_vector.h"
 
-#define ZH_PCF8574_GPIO_OUTPUT false
-#define ZH_PCF8574_GPIO_INPUT true
-#define ZH_PCF8574_GPIO_LOW false
-#define ZH_PCF8574_GPIO_HIGH true
+#define ZH_PCF8574_GPIO_OUTPUT false /*!< Configures GPIO pin as output */
+#define ZH_PCF8574_GPIO_INPUT true   /*!< Configures GPIO pin as input */
+#define ZH_PCF8574_GPIO_LOW false    /*!< Logical low level */
+#define ZH_PCF8574_GPIO_HIGH true    /*!< Logical high level */
 
-/**
- * @brief PCF8574 expander initial default values.
- */
 #define ZH_PCF8574_INIT_CONFIG_DEFAULT()             \
     {                                                \
         .task_priority = 1,                          \
@@ -42,178 +56,208 @@ extern "C"
 {
 #endif
 
-    extern TaskHandle_t zh_pcf8574; /*!< Unique task handle. */
+    extern TaskHandle_t zh_pcf8574; /*!< Handle of the internal PCF8574 processing task. */
 
     /**
-     * @brief Enumeration of PCF8574 expander GPIO.
+     * @brief Opaque handle for PCF8574 device instance.
+     *
+     * Forward declaration of the internal device handle structure.
+     * Used by all public API functions to reference a specific
+     * PCF8574 device instance.
+     */
+    typedef struct _zh_pcf8574_handle_t zh_pcf8574_handle_t;
+
+    /**
+     * @brief PCF8574 GPIO pin numbering enumeration.
+     *
+     * Defines the pin numbering scheme for accessing individual
+     * GPIO pins (P0-P7) of the PCF8574 device.
      */
     typedef enum
     {
-        ZH_PCF8574_GPIO_NUM_P0 = 0,
-        ZH_PCF8574_GPIO_NUM_P1,
-        ZH_PCF8574_GPIO_NUM_P2,
-        ZH_PCF8574_GPIO_NUM_P3,
-        ZH_PCF8574_GPIO_NUM_P4,
-        ZH_PCF8574_GPIO_NUM_P5,
-        ZH_PCF8574_GPIO_NUM_P6,
-        ZH_PCF8574_GPIO_NUM_P7,
-        ZH_PCF8574_GPIO_NUM_MAX
+        ZH_PCF8574_GPIO_NUM_P0 = 0, /*!< GPIO pin P0 */
+        ZH_PCF8574_GPIO_NUM_P1,     /*!< GPIO pin P1 */
+        ZH_PCF8574_GPIO_NUM_P2,     /*!< GPIO pin P2 */
+        ZH_PCF8574_GPIO_NUM_P3,     /*!< GPIO pin P3 */
+        ZH_PCF8574_GPIO_NUM_P4,     /*!< GPIO pin P4 */
+        ZH_PCF8574_GPIO_NUM_P5,     /*!< GPIO pin P5 */
+        ZH_PCF8574_GPIO_NUM_P6,     /*!< GPIO pin P6 */
+        ZH_PCF8574_GPIO_NUM_P7,     /*!< GPIO pin P7 */
+        ZH_PCF8574_GPIO_NUM_MAX     /*!< Maximum number of GPIO pins */
     } zh_pcf8574_gpio_num_t;
 
     /**
-     * @brief Structure for initial initialization of PCF8574 expander.
+     * @brief Initialization configuration structure for PCF8574 device.
+     *
+     * Defines all parameters required to initialize and configure
+     * the PCF8574 I2C GPIO expander, including I2C settings,
+     * individual GPIO direction modes, and interrupt configuration.
+     *
+     * @note The I2C bus must be initialized before calling zh_pcf8574_init().
      */
     typedef struct
     {
-        i2c_master_bus_handle_t i2c_handle; /*!< Unique I2C bus handle. @attention Must be same for all PCF8574 expanders. */
-        uint32_t i2c_frequency;             /*!< Expander I2C frequency. */
-        uint16_t stack_size;                /*!< Stack size for task for the PCF8574 expander isr processing processing. @note The minimum size is configMINIMAL_STACK_SIZE. */
-        uint8_t task_priority;              /*!< Task priority for the PCF8574 expander isr processing. @note Minimum value is 1. */
-        uint8_t i2c_address;                /*!< Expander I2C address. */
-        bool p0_gpio_work_mode;             /*!< Expander GPIO PO work mode. */
-        bool p1_gpio_work_mode;             /*!< Expander GPIO P1 work mode. */
-        bool p2_gpio_work_mode;             /*!< Expander GPIO P2 work mode. */
-        bool p3_gpio_work_mode;             /*!< Expander GPIO P3 work mode. */
-        bool p4_gpio_work_mode;             /*!< Expander GPIO P4 work mode. */
-        bool p5_gpio_work_mode;             /*!< Expander GPIO P5 work mode. */
-        bool p6_gpio_work_mode;             /*!< Expander GPIO P6 work mode. */
-        bool p7_gpio_work_mode;             /*!< Expander GPIO P7 work mode. */
-        gpio_num_t interrupt_gpio;          /*!< Interrupt GPIO. @attention Must be same for all PCF8574 expanders. */
+        i2c_master_bus_handle_t i2c_handle; /*!< I2C bus handle for communication */
+        uint32_t i2c_frequency;             /*!< I2C clock frequency in Hz */
+        uint32_t stack_size;                /*!< Stack size for the internal task */
+        uint8_t task_priority;              /*!< Priority of the internal task */
+        uint8_t i2c_address;                /*!< 7-bit I2C address of the PCF8574 device */
+        bool p0_gpio_work_mode;             /*!< Operating mode for GPIO P0 (input/output) */
+        bool p1_gpio_work_mode;             /*!< Operating mode for GPIO P1 (input/output) */
+        bool p2_gpio_work_mode;             /*!< Operating mode for GPIO P2 (input/output) */
+        bool p3_gpio_work_mode;             /*!< Operating mode for GPIO P3 (input/output) */
+        bool p4_gpio_work_mode;             /*!< Operating mode for GPIO P4 (input/output) */
+        bool p5_gpio_work_mode;             /*!< Operating mode for GPIO P5 (input/output) */
+        bool p6_gpio_work_mode;             /*!< Operating mode for GPIO P6 (input/output) */
+        bool p7_gpio_work_mode;             /*!< Operating mode for GPIO P7 (input/output) */
+        gpio_num_t interrupt_gpio;          /*!< GPIO pin for interrupt detection (GPIO_NUM_MAX if not used) */
     } zh_pcf8574_init_config_t;
 
     /**
-     * @brief PCF8574 expander handle.
+     * @brief Statistics structure for error tracking and diagnostics.
+     *
+     * Maintains counters for various error types and monitoring data
+     * to assist with debugging and system health monitoring.
      */
     typedef struct
     {
-        uint8_t i2c_address;                /*!< Expander I2C address. */
-        uint8_t gpio_work_mode;             /*!< Expander GPIO's work mode. */
-        uint8_t gpio_status;                /*!< Expander GPIO's status. */
-        bool is_initialized;                /*!< Expander initialization flag. */
-        i2c_master_dev_handle_t dev_handle; /*!< Unique I2C device handle. */
-        void *system;                       /*!< System pointer for use in another components. */
-    } zh_pcf8574_handle_t;
-
-    /**
-     * @brief Structure for error statistics storage.
-     */
-    typedef struct
-    {
-        uint32_t i2c_driver_error;     /*!< Number of i2c driver error. */
-        uint32_t event_post_error;     /*!< Number of event post error. */
-        uint32_t vector_error;         /*!< Number of vector error. */
-        uint32_t queue_overflow_error; /*!< Number of queue overflow error. */
-        uint32_t min_stack_size;       /*!< Minimum free stack size. */
+        uint32_t i2c_driver_error;     /*!< Counter of I2C driver errors */
+        uint32_t event_post_error;     /*!< Counter of event posting errors */
+        uint32_t vector_error;         /*!< Counter of vector operation errors */
+        uint32_t queue_overflow_error; /*!< Counter of queue overflow errors */
+        uint32_t min_stack_size;       /*!< Minimum remaining stack size recorded */
     } zh_pcf8574_stats_t;
 
     ESP_EVENT_DECLARE_BASE(ZH_PCF8574);
 
     /**
-     * @brief Structure for sending data to the event handler when cause an interrupt.
+     * @brief Event structure for GPIO interrupt events.
      *
-     * @note Should be used with ZH_PCF8574 event base.
+     * Passed as event data when a GPIO level change is detected
+     * on any input pin of the PCF8574 device.
      */
     typedef struct
     {
-        uint64_t interrupt_time;           /*!< Interrupt time. */
-        zh_pcf8574_gpio_num_t gpio_number; /*!< The GPIO that caused the interrupt. */
-        uint8_t i2c_address;               /*!< The i2c address of PCF8574 expander that caused the interrupt. */
-        bool gpio_level;                   /*!< The GPIO level that caused the interrupt. */
+        uint64_t interrupt_time;           /*!< Timestamp of the interrupt occurrence */
+        zh_pcf8574_gpio_num_t gpio_number; /*!< GPIO pin that triggered the interrupt */
+        uint8_t i2c_address;               /*!< I2C address of the device that generated the interrupt */
+        bool gpio_level;                   /*!< Current level of the GPIO pin */
     } zh_pcf8574_event_on_isr_t;
 
     /**
-     * @brief Initialize PCF8574 expander.
+     * @brief Initialize PCF8574 device.
      *
-     * @param[in] config Pointer to PCF8574 initialized configuration structure. Can point to a temporary variable.
-     * @param[out] handle Pointer to unique PCF8574 handle.
+     * Creates an internal task for interrupt processing and configures
+     * the I2C communication with the PCF8574 device according to the
+     * provided configuration.
      *
-     * @attention I2C driver must be initialized first.
+     * @param[in] config Pointer to initialization configuration structure (must not be NULL)
+     * @param[out] handle Pointer to receive the device handle (must be NULL)
      *
-     * @note Before initialize the expander recommend initialize zh_pcf8574_init_config_t structure with default values.
-     *
-     * @code zh_pcf8574_init_config_t config = ZH_PCF8574_INIT_CONFIG_DEFAULT() @endcode
-     *
-     * @return ESP_OK if success or an error code otherwise.
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if config parameter is NULL
+     * @return ESP_ERR_NO_MEM if memory allocation fails
+     * @return ESP_ERR_NOT_SUPPORTED if I2C initialization fails
      */
-    esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t *handle);
+    esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t **handle);
 
     /**
-     * @brief Deinitialize PCF8574 expander.
+     * @brief Deinitialize PCF8574 device.
      *
-     * @param[in] handle Pointer to unique PCF8574 handle.
+     * Deletes the internal task and releases all allocated resources.
      *
-     * @return ESP_OK if success or an error code otherwise.
+     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     *
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if handle parameter is NULL
      */
-    esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t *handle);
+    esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t **handle);
 
     /**
-     * @brief Read PCF8574 all GPIO's status.
+     * @brief Read data from PCF8574 device.
      *
-     * @param[in] handle Pointer to unique PCF8574 handle.
-     * @param[out] reg Pointer to GPIO's status.
+     * Reads a byte from the PCF8574 input ports via I2C communication.
      *
-     * @note For input GPIO's status will be 1 (HIGH) always.
+     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[out] reg Pointer to receive the read value (must not be NULL)
      *
-     * @return ESP_OK if success or an error code otherwise.
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if handle or reg is NULL
+     * @return ESP_ERR_INVALID_STATE if device is not initialized
      */
-    esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t *handle, uint8_t *reg);
+    esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t **handle, uint8_t *reg);
 
     /**
-     * @brief Set PCF8574 all GPIO's status.
+     * @brief Write data to PCF8574 device.
      *
-     * @param[in] handle Pointer to unique PCF8574 handle.
-     * @param[in] reg GPIO's status.
+     * Writes a byte to the PCF8574 output ports via I2C communication.
      *
-     * @attention Only the GPIO outputs are affected.
+     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] reg Value to write to the output ports
      *
-     * @return ESP_OK if success or an error code otherwise.
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if handle is NULL
+     * @return ESP_ERR_INVALID_STATE if device is not initialized
      */
-    esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t *handle, uint8_t reg);
+    esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t **handle, uint8_t reg);
 
     /**
-     * @brief Reset (set to initial) PCF8574 all GPIO's.
+     * @brief Reset PCF8574 device.
      *
-     * @param[in] handle Pointer to unique PCF8574 handle.
+     * Resets the device to its default state, clearing all outputs
+     * and reinitializing internal structures.
      *
-     * @return ESP_OK if success or an error code otherwise.
+     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     *
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if handle is NULL
      */
-    esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t *handle);
+    esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t **handle);
 
     /**
-     * @brief Read PCF8574 GPIO status.
+     * @brief Read the state of a specific GPIO pin.
      *
-     * @param[in] handle Pointer to unique PCF8574 handle.
-     * @param[in] gpio GPIO number.
-     * @param[out] status Pointer to GPIO status (true - HIGH, false - LOW).
+     * Reads the current logical level of a specified GPIO pin.
      *
-     * @note For input GPIO's status will be 1 (HIGH) always.
+     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] gpio GPIO pin number to read
+     * @param[out] status Pointer to receive the pin state (true = high, false = low)
      *
-     * @return ESP_OK if success or an error code otherwise.
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if handle, gpio, or status is NULL
+     * @return ESP_ERR_INVALID_ARG if gpio number exceeds ZH_PCF8574_GPIO_NUM_MAX
      */
-    esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_t gpio, bool *status);
+    esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool *status);
 
     /**
-     * @brief Set PCF8574 GPIO status.
+     * @brief Write state to a specific GPIO pin.
      *
-     * @param[in] handle Pointer to unique PCF8574 handle.
-     * @param[in] gpio GPIO number.
-     * @param[in] status GPIO status (true - HIGH, false - LOW).
+     * Sets the logical level of a specified GPIO pin configured as output.
      *
-     * @attention Only the GPIO output is affected.
+     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] gpio GPIO pin number to write
+     * @param[in] status Logical level to set (true = high, false = low)
      *
-     * @return ESP_OK if success or an error code otherwise.
+     * @return ESP_OK on success
+     * @return ESP_ERR_INVALID_ARG if handle, gpio, or status is NULL
+     * @return ESP_ERR_INVALID_ARG if gpio number exceeds ZH_PCF8574_GPIO_NUM_MAX
      */
-    esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t *handle, zh_pcf8574_gpio_num_t gpio, bool status);
+    esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool status);
 
     /**
-     * @brief Get error statistics.
+     * @brief Get device statistics.
      *
-     * @return Pointer to the statistics structure.
+     * Returns a pointer to the structure containing error counters
+     * and monitoring data for debugging and diagnostics.
+     *
+     * @return Pointer to the statistics structure (valid until reset)
      */
     const zh_pcf8574_stats_t *zh_pcf8574_get_stats(void);
 
     /**
-     * @brief Reset error statistics.
+     * @brief Reset device statistics.
+     *
+     * Clears all error counters and monitoring data.
      */
     void zh_pcf8574_reset_stats(void);
 
