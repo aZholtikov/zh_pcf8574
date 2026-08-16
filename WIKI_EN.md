@@ -163,10 +163,10 @@ Initializes the PCF8574 expander.
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL config or handle)
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL config, handle or *handle)
 - `ESP_ERR_INVALID_STATE` - Expander already initialized
 - `ESP_ERR_NO_MEM` - Insufficient memory
-- `ESP_ERR_NOT_SUPPORTED` - I2C initialization error
+- `ESP_FAIL` - Configuration validation, I2C communication, or task creation error
 
 ---
 
@@ -182,6 +182,8 @@ Deinitializes the PCF8574 expander.
 
 - `ESP_OK` - Success
 - `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or *handle)
+- `ESP_ERR_NOT_FOUND` - Handle does not correspond to a registered device
+- `ESP_FAIL` - I2C removal or vector operation error
 
 ---
 
@@ -197,10 +199,9 @@ Reads the state of all GPIO pins of the expander.
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or reg)
-- `ESP_ERR_INVALID_STATE` - Expander not initialized
-
-**Note:** For input GPIOs, the value will always be 1 (HIGH).
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle, *handle or reg)
+- `ESP_ERR_NOT_FOUND` - Handle does not correspond to a registered device
+- `ESP_FAIL` - I2C communication or vector operation error
 
 ---
 
@@ -216,8 +217,9 @@ Sets the state of all output GPIO pins of the expander.
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle)
-- `ESP_ERR_INVALID_STATE` - Expander not initialized
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or *handle)
+- `ESP_ERR_NOT_FOUND` - Handle does not correspond to a registered device
+- `ESP_FAIL` - I2C communication or vector operation error
 
 **Note:** Only output GPIOs are affected.
 
@@ -235,6 +237,8 @@ Resets all GPIO pins of the expander to the initial state.
 
 - `ESP_OK` - Success
 - `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or *handle)
+- `ESP_ERR_NOT_FOUND` - Handle does not correspond to a registered device
+- `ESP_FAIL` - I2C communication or vector operation error
 
 ---
 
@@ -251,8 +255,8 @@ Reads the state of one GPIO pin of the expander.
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle, gpio, status or gpio out of range)
-- `ESP_ERR_INVALID_STATE` - Expander not initialized
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle or status)
+- `ESP_FAIL` - Invalid gpio, handle mismatch, or I2C communication error
 
 **Note:** For input GPIOs, the value will always be 1 (HIGH).
 
@@ -271,8 +275,8 @@ Sets the state of one output GPIO pin of the expander.
 **Returns:**
 
 - `ESP_OK` - Success
-- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle, gpio, status or gpio out of range)
-- `ESP_ERR_INVALID_STATE` - Expander not initialized
+- `ESP_ERR_INVALID_ARG` - Invalid argument (NULL handle)
+- `ESP_FAIL` - Invalid gpio, handle mismatch, or I2C communication error
 
 **Note:** Only output GPIOs are affected.
 
@@ -303,7 +307,7 @@ Resets error statistics counters.
 
 #define I2C_PORT (I2C_NUM_MAX - 1)
 
-zh_pcf8574_handle_t pcf8574_handle = {0};
+zh_pcf8574_handle_t *pcf8574_handle = NULL;
 
 void print_gpio_status(const char *message, uint8_t reg)
 {
@@ -371,7 +375,7 @@ void app_main(void)
 
 #define I2C_PORT (I2C_NUM_MAX - 1)
 
-zh_pcf8574_handle_t pcf8574_handle = {0};
+zh_pcf8574_handle_t *pcf8574_handle = NULL;
 
 void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -441,7 +445,7 @@ void app_main(void)
 | `ESP_OK` | Operation successful |
 | `ESP_ERR_INVALID_ARG` | Invalid argument (NULL pointer or invalid configuration) |
 | `ESP_ERR_INVALID_STATE` | Device not initialized or already initialized |
-| `ESP_ERR_NOT_FOUND` | Device not initialized |
+| `ESP_ERR_NOT_FOUND` | Handle does not correspond to a registered device |
 | `ESP_ERR_NO_MEM` | Insufficient memory |
 | `ESP_FAIL` | General failure (I2C communication error, initialization error, etc.) |
 

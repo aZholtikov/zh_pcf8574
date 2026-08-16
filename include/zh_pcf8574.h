@@ -155,62 +155,72 @@ extern "C"
      * @param[out] handle Pointer to receive the device handle (must be NULL)
      *
      * @return ESP_OK on success
-     * @return ESP_ERR_INVALID_ARG if config parameter is NULL
+     * @return ESP_ERR_INVALID_ARG if config is NULL or handle points to non-NULL
+     * @return ESP_ERR_INVALID_STATE if device is already initialized
      * @return ESP_ERR_NO_MEM if memory allocation fails
-     * @return ESP_ERR_NOT_SUPPORTED if I2C initialization fails
+     * @return ESP_FAIL if configuration validation, I2C communication, or task creation fails
      */
     esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t **handle);
 
     /**
      * @brief Deinitialize PCF8574 device.
      *
-     * Deletes the internal task and releases all allocated resources.
+     * Releases I2C resources and the device handle. Deletes the internal
+     * task only when the last device instance is deinitialized.
      *
-     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] handle Pointer to the device handle (must not be NULL)
      *
      * @return ESP_OK on success
-     * @return ESP_ERR_INVALID_ARG if handle parameter is NULL
+     * @return ESP_ERR_INVALID_ARG if handle is NULL
+     * @return ESP_ERR_NOT_FOUND if handle does not correspond to a valid device instance
+     * @return ESP_FAIL if I2C removal or vector operations fail
      */
     esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t **handle);
 
     /**
      * @brief Read data from PCF8574 device.
      *
-     * Reads a byte from the PCF8574 input ports via I2C communication.
+     * Reads a byte from the PCF8574 input ports via I2C communication
+     * and updates the internal device state.
      *
-     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] handle Pointer to the device handle (must not be NULL)
      * @param[out] reg Pointer to receive the read value (must not be NULL)
      *
      * @return ESP_OK on success
      * @return ESP_ERR_INVALID_ARG if handle or reg is NULL
-     * @return ESP_ERR_INVALID_STATE if device is not initialized
+     * @return ESP_ERR_NOT_FOUND if handle does not correspond to a valid device instance
+     * @return ESP_FAIL if I2C communication or vector operations fail
      */
     esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t **handle, uint8_t *reg);
 
     /**
      * @brief Write data to PCF8574 device.
      *
-     * Writes a byte to the PCF8574 output ports via I2C communication.
+     * Writes a byte to the PCF8574 output ports via I2C communication
+     * and updates the internal device state.
      *
-     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] handle Pointer to the device handle (must not be NULL)
      * @param[in] reg Value to write to the output ports
      *
      * @return ESP_OK on success
      * @return ESP_ERR_INVALID_ARG if handle is NULL
-     * @return ESP_ERR_INVALID_STATE if device is not initialized
+     * @return ESP_ERR_NOT_FOUND if handle does not correspond to a valid device instance
+     * @return ESP_FAIL if I2C communication or vector operations fail
      */
     esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t **handle, uint8_t reg);
 
     /**
      * @brief Reset PCF8574 device.
      *
-     * Resets the device to its default state, clearing all outputs
-     * and reinitializing internal structures.
+     * Resets all outputs to their default input configuration
+     * and updates the internal device state.
      *
-     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] handle Pointer to the device handle (must not be NULL)
      *
      * @return ESP_OK on success
      * @return ESP_ERR_INVALID_ARG if handle is NULL
+     * @return ESP_ERR_NOT_FOUND if handle does not correspond to a valid device instance
+     * @return ESP_FAIL if I2C communication or vector operations fail
      */
     esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t **handle);
 
@@ -219,13 +229,13 @@ extern "C"
      *
      * Reads the current logical level of a specified GPIO pin.
      *
-     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] handle Pointer to the device handle (must not be NULL)
      * @param[in] gpio GPIO pin number to read
      * @param[out] status Pointer to receive the pin state (true = high, false = low)
      *
      * @return ESP_OK on success
-     * @return ESP_ERR_INVALID_ARG if handle, gpio, or status is NULL
-     * @return ESP_ERR_INVALID_ARG if gpio number exceeds ZH_PCF8574_GPIO_NUM_MAX
+     * @return ESP_ERR_INVALID_ARG if handle or status is NULL
+     * @return ESP_FAIL if gpio is invalid, handle is invalid, or I2C communication fails
      */
     esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool *status);
 
@@ -234,13 +244,13 @@ extern "C"
      *
      * Sets the logical level of a specified GPIO pin configured as output.
      *
-     * @param[in,out] handle Pointer to the device handle (must not be NULL)
+     * @param[in] handle Pointer to the device handle (must not be NULL)
      * @param[in] gpio GPIO pin number to write
      * @param[in] status Logical level to set (true = high, false = low)
      *
      * @return ESP_OK on success
-     * @return ESP_ERR_INVALID_ARG if handle, gpio, or status is NULL
-     * @return ESP_ERR_INVALID_ARG if gpio number exceeds ZH_PCF8574_GPIO_NUM_MAX
+     * @return ESP_ERR_INVALID_ARG if handle is NULL
+     * @return ESP_FAIL if gpio is invalid, handle is invalid, or I2C communication fails
      */
     esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool status);
 

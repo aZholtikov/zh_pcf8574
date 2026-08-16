@@ -163,10 +163,10 @@ typedef struct
 **Возвращает:**
 
 - `ESP_OK` - Успех
-- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL config или handle)
+- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL config, handle или *handle)
 - `ESP_ERR_INVALID_STATE` - Расширитель уже инициализирован
 - `ESP_ERR_NO_MEM` - Недостаточно памяти
-- `ESP_ERR_NOT_SUPPORTED` - Ошибка инициализации I2C
+- `ESP_FAIL` - Ошибка валидации конфигурации, I2C-связи или создания задачи
 
 ---
 
@@ -182,6 +182,8 @@ typedef struct
 
 - `ESP_OK` - Успех
 - `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle или *handle)
+- `ESP_ERR_NOT_FOUND` - Handle не соответствует зарегистрированному устройству
+- `ESP_FAIL` - Ошибка удаления I2C или операций с вектором
 
 ---
 
@@ -197,10 +199,9 @@ typedef struct
 **Возвращает:**
 
 - `ESP_OK` - Успех
-- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle или reg)
-- `ESP_ERR_INVALID_STATE` - Расширитель не инициализирован
-
-**Примечание:** Для входных GPIO всегда будет 1 (HIGH).
+- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle, *handle или reg)
+- `ESP_ERR_NOT_FOUND` - Handle не соответствует зарегистрированному устройству
+- `ESP_FAIL` - Ошибка I2C-связи или операций с вектором
 
 ---
 
@@ -216,10 +217,11 @@ typedef struct
 **Возвращает:**
 
 - `ESP_OK` - Успех
-- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle)
-- `ESP_ERR_INVALID_STATE` - Расширитель не инициализирован
+- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle или *handle)
+- `ESP_ERR_NOT_FOUND` - Handle не соответствует зарегистрированному устройству
+- `ESP_FAIL` - Ошибка I2C-связи или операций с вектором
 
-**Примечание:** Влияет только на выходные GPIO.
+**Примечание:** Только на выходные GPIO влияет.
 
 ---
 
@@ -235,6 +237,8 @@ typedef struct
 
 - `ESP_OK` - Успех
 - `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle или *handle)
+- `ESP_ERR_NOT_FOUND` - Handle не соответствует зарегистрированному устройству
+- `ESP_FAIL` - Ошибка I2C-связи или операций с вектором
 
 ---
 
@@ -251,8 +255,8 @@ typedef struct
 **Возвращает:**
 
 - `ESP_OK` - Успех
-- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle, gpio, status или выход gpio за пределы)
-- `ESP_ERR_INVALID_STATE` - Расширитель не инициализирован
+- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle или status)
+- `ESP_FAIL` - Неверный номер gpio, handle не соответствует устройству или I2C-связь
 
 **Примечание:** Для входных GPIO всегда будет 1 (HIGH).
 
@@ -271,8 +275,8 @@ typedef struct
 **Возвращает:**
 
 - `ESP_OK` - Успех
-- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle, gpio, status или выход gpio за пределы)
-- `ESP_ERR_INVALID_STATE` - Расширитель не инициализирован
+- `ESP_ERR_INVALID_ARG` - Неверный аргумент (NULL handle)
+- `ESP_FAIL` - Неверный номер gpio, handle не соответствует устройству или I2C-связь
 
 **Примечание:** Влияет только на выходные GPIO.
 
@@ -303,7 +307,7 @@ typedef struct
 
 #define I2C_PORT (I2C_NUM_MAX - 1)
 
-zh_pcf8574_handle_t pcf8574_handle = {0};
+zh_pcf8574_handle_t *pcf8574_handle = NULL;
 
 void print_gpio_status(const char *message, uint8_t reg)
 {
@@ -371,7 +375,7 @@ void app_main(void)
 
 #define I2C_PORT (I2C_NUM_MAX - 1)
 
-zh_pcf8574_handle_t pcf8574_handle = {0};
+zh_pcf8574_handle_t *pcf8574_handle = NULL;
 
 void zh_pcf8574_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -441,7 +445,7 @@ void app_main(void)
 | `ESP_OK` | Операция выполнена успешно |
 | `ESP_ERR_INVALID_ARG` | Неверный аргумент (NULL указатель или неверная конфигурация) |
 | `ESP_ERR_INVALID_STATE` | Устройство не инициализировано или уже инициализировано |
-| `ESP_ERR_NOT_FOUND` | Устройство не инициализировано |
+| `ESP_ERR_NOT_FOUND` | Handle не соответствует зарегистрированному устройству |
 | `ESP_ERR_NO_MEM` | Недостаточно памяти |
 | `ESP_FAIL` | Общая ошибка (ошибка связи I2C, инициализации и т.д.) |
 
