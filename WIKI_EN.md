@@ -45,7 +45,7 @@ cd ../your_project/components
 Clone the repository:
 
 ```bash
-git clone https://github.com/aZholtikov/zh_pcf8574.git
+git clone https://github.com/aZholtikov/zh_pcf8574
 ```
 
 In your application, include the header:
