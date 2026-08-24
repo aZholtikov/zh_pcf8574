@@ -446,22 +446,25 @@ static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter) // -V20
         {
             _zh_pcf8574_vector_data_t vector_data = {0};
             ZH_ERROR_CHECK_CONT(zh_vector_get_item(&_vector, i, &vector_data) == ESP_OK, ++_stats.vector_error, "PCF8574 isr processing failed. Failed to get vector item data.");
-            zh_pcf8574_event_on_isr_t event = {0};
-            event.i2c_address = vector_data.i2c_address;
-            uint8_t old_reg = vector_data.gpio_status;
-            uint8_t new_reg = 0;
-            ZH_ERROR_CHECK_CONT(_zh_pcf8574_read_register(&vector_data, &new_reg) == ESP_OK, NULL, "PCF8574 isr processing failed. Failed to read expander register.");
-            ZH_ERROR_CHECK_CONT(zh_vector_change_item(&_vector, i, &vector_data) == ESP_OK, ++_stats.vector_error, "PCF8574 isr processing failed. Failed to change vector item data.");
-            for (uint8_t j = 0; j <= 7; ++j)
+            if (vector_data.gpio_work_mode != 0)
             {
-                if ((vector_data.gpio_work_mode & _gpio_matrix[j]) != 0)
+                zh_pcf8574_event_on_isr_t event = {0};
+                event.i2c_address = vector_data.i2c_address;
+                uint8_t old_reg = vector_data.gpio_status;
+                uint8_t new_reg = 0;
+                ZH_ERROR_CHECK_CONT(_zh_pcf8574_read_register(&vector_data, &new_reg) == ESP_OK, NULL, "PCF8574 isr processing failed. Failed to read expander register.");
+                ZH_ERROR_CHECK_CONT(zh_vector_change_item(&_vector, i, &vector_data) == ESP_OK, ++_stats.vector_error, "PCF8574 isr processing failed. Failed to change vector item data.");
+                for (uint8_t j = 0; j <= 7; ++j)
                 {
-                    if ((old_reg & _gpio_matrix[j]) != (new_reg & _gpio_matrix[j]))
+                    if ((vector_data.gpio_work_mode & _gpio_matrix[j]) != 0)
                     {
-                        event.gpio_number = j;
-                        event.gpio_level = new_reg & _gpio_matrix[j];
-                        event.interrupt_time = esp_timer_get_time();
-                        ZH_ERROR_CHECK_CONT(esp_event_post(ZH_PCF8574, 0, &event, sizeof(event), 1000 / portTICK_PERIOD_MS) == ESP_OK, ++_stats.event_post_error, "PCF8574 isr processing failed. Failed to post interrupt event.");
+                        if ((old_reg & _gpio_matrix[j]) != (new_reg & _gpio_matrix[j]))
+                        {
+                            event.gpio_number = j;
+                            event.gpio_level = new_reg & _gpio_matrix[j];
+                            event.interrupt_time = esp_timer_get_time();
+                            ZH_ERROR_CHECK_CONT(esp_event_post(ZH_PCF8574, 0, &event, sizeof(event), 1000 / portTICK_PERIOD_MS) == ESP_OK, ++_stats.event_post_error, "PCF8574 isr processing failed. Failed to post interrupt event.");
+                        }
                     }
                 }
             }
