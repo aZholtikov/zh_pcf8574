@@ -424,6 +424,7 @@ static esp_err_t _zh_pcf8574_task_init(const zh_pcf8574_init_config_t *config)
 
 static void IRAM_ATTR _zh_pcf8574_isr_handler(void *arg)
 {
+    (void)arg;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     if (xSemaphoreGiveFromISR(_interrupt_semaphore, &xHigherPriorityTaskWoken) != pdTRUE)
     {
@@ -437,6 +438,7 @@ static void IRAM_ATTR _zh_pcf8574_isr_handler(void *arg)
 
 static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter) // -V2008
 {
+    (void)pvParameter;
     for (;;)
     {
         xSemaphoreTake(_interrupt_semaphore, portMAX_DELAY);
