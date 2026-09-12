@@ -170,7 +170,7 @@ static esp_err_t _zh_pcf8574_write_register(_zh_pcf8574_vector_data_t *vector_da
 
 ESP_EVENT_DEFINE_BASE(ZH_PCF8574);
 
-esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t **handle) // -V2008
+esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_handle_t **handle)
 {
     ZH_LOGI("PCF8574 initialization started.");
     ZH_ERROR_CHECK(config != NULL && handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 initialization failed. Invalid argument.");
@@ -214,7 +214,7 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t **handle) // -V2008
+esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t **handle)
 {
     ZH_LOGI("PCF8574 deinitialization started.");
     ZH_ERROR_CHECK(handle != NULL && *handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 deinitialization failed. Invalid argument.");
@@ -247,7 +247,7 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t **handle) // -V2008
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t **handle, uint8_t *reg) // -V2008
+esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t **handle, uint8_t *reg)
 {
     ZH_LOGI("PCF8574 read register started.");
     ZH_ERROR_CHECK(handle != NULL && *handle != NULL && reg != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read register failed. Invalid argument.");
@@ -262,7 +262,7 @@ esp_err_t zh_pcf8574_read(zh_pcf8574_handle_t **handle, uint8_t *reg) // -V2008
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t **handle, uint8_t reg) // -V2008
+esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t **handle, uint8_t reg)
 {
     ZH_LOGI("PCF8574 write register started.");
     ZH_ERROR_CHECK(handle != NULL && *handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 write register failed. Invalid argument.");
@@ -277,7 +277,7 @@ esp_err_t zh_pcf8574_write(zh_pcf8574_handle_t **handle, uint8_t reg) // -V2008
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t **handle) // -V2008
+esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t **handle)
 {
     ZH_LOGI("PCF8574 reset register started.");
     ZH_ERROR_CHECK(handle != NULL && *handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 reset register failed. Invalid argument.");
@@ -292,7 +292,7 @@ esp_err_t zh_pcf8574_reset(zh_pcf8574_handle_t **handle) // -V2008
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool *status) // -V2008
+esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool *status)
 {
     ZH_LOGI("PCF8574 read GPIO started.");
     ZH_ERROR_CHECK(handle != NULL && *handle != NULL && status != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 read GPIO failed. Invalid argument.");
@@ -310,7 +310,7 @@ esp_err_t zh_pcf8574_read_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num
     return ESP_OK;
 }
 
-esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool status) // -V2008
+esp_err_t zh_pcf8574_write_gpio(zh_pcf8574_handle_t **handle, zh_pcf8574_gpio_num_t gpio, bool status)
 {
     ZH_LOGI("PCF8574 write GPIO started.");
     ZH_ERROR_CHECK(handle != NULL && *handle != NULL, ESP_ERR_INVALID_ARG, NULL, "PCF8574 write GPIO failed. Invalid argument.");
@@ -349,7 +349,7 @@ void zh_pcf8574_reset_stats(void)
     ZH_LOGI("Error statistic reset successfully.");
 }
 
-static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *config) // -V2008
+static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *config)
 {
     ZH_ERROR_CHECK((config->i2c_address >= 0x20 && config->i2c_address <= 0x27) || (config->i2c_address >= 0x38 && config->i2c_address <= 0x3F), ESP_ERR_INVALID_ARG, NULL, "Invalid I2C address.");
     ZH_ERROR_CHECK(config->i2c_frequency <= 100000, ESP_ERR_INVALID_ARG, NULL, "Invalid I2C frequency.");
@@ -366,7 +366,7 @@ static esp_err_t _zh_pcf8574_validate_config(const zh_pcf8574_init_config_t *con
     return ESP_OK;
 }
 
-static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config) // -V2008
+static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config)
 {
     gpio_config_t interrupt_gpio_config = {
         .intr_type = GPIO_INTR_NEGEDGE,
@@ -384,7 +384,7 @@ static esp_err_t _zh_pcf8574_gpio_init(const zh_pcf8574_init_config_t *config) /
     return ESP_OK;
 }
 
-static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, _zh_pcf8574_vector_data_t *vector_data) // -V2008
+static esp_err_t _zh_pcf8574_i2c_init(const zh_pcf8574_init_config_t *config, _zh_pcf8574_vector_data_t *vector_data)
 {
     i2c_device_config_t pcf8574_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
@@ -436,7 +436,7 @@ static void IRAM_ATTR _zh_pcf8574_isr_handler(void *arg)
     };
 }
 
-static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter) // -V2008
+static void IRAM_ATTR _zh_pcf8574_isr_processing_task(void *pvParameter)
 {
     (void)pvParameter;
     for (;;)
