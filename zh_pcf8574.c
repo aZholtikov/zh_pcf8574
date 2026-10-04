@@ -193,12 +193,12 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
     {
         ZH_ERROR_CHECK(_zh_pcf8574_resources_init() == ESP_OK, ESP_FAIL,
                        {ZH_ERROR_CHECK_CONT(i2c_master_bus_rm_device(vector_data.dev_handle) == ESP_OK, NULL, "I2C remove device failed.")};
-                       ZH_ERROR_CHECK_CONT(zh_vector_delete_back(&_vector) == ESP_OK, NULL, "Failed delete vector data.");
+                       {ZH_ERROR_CHECK_CONT(zh_vector_delete_back(&_vector) == ESP_OK, NULL, "Failed delete vector data.")};
                        heap_caps_free(*handle); *handle = NULL, "PCF8574 initialization failed. Resources initialization failed.");
         ZH_ERROR_CHECK(_zh_pcf8574_gpio_init(config) == ESP_OK, ESP_FAIL,
                        {ZH_ERROR_CHECK_CONT(i2c_master_bus_rm_device(vector_data.dev_handle) == ESP_OK, NULL, "I2C remove device failed.")};
                        vSemaphoreDelete(_interrupt_semaphore); _interrupt_semaphore = NULL;
-                       ZH_ERROR_CHECK_CONT(zh_vector_delete_back(&_vector) == ESP_OK, NULL, "Failed delete vector data.");
+                       {ZH_ERROR_CHECK_CONT(zh_vector_delete_back(&_vector) == ESP_OK, NULL, "Failed delete vector data.")};
                        heap_caps_free(*handle);
                        *handle = NULL, "PCF8574 initialization failed. Interrupt GPIO initialization failed.");
         ZH_ERROR_CHECK(_zh_pcf8574_task_init(config) == ESP_OK, ESP_FAIL,
@@ -206,7 +206,7 @@ esp_err_t zh_pcf8574_init(const zh_pcf8574_init_config_t *config, zh_pcf8574_han
                        {ZH_ERROR_CHECK_CONT(gpio_isr_handler_remove(config->interrupt_gpio) == ESP_OK, NULL, "Remove gpio isr handler failed.")};
                        {ZH_ERROR_CHECK_CONT(gpio_reset_pin(config->interrupt_gpio) == ESP_OK, NULL, "Reset gpio failed.")};
                        vSemaphoreDelete(_interrupt_semaphore); _interrupt_semaphore = NULL;
-                       ZH_ERROR_CHECK_CONT(zh_vector_delete_back(&_vector) == ESP_OK, NULL, "Failed delete vector data.");
+                       {ZH_ERROR_CHECK_CONT(zh_vector_delete_back(&_vector) == ESP_OK, NULL, "Failed delete vector data.")};
                        heap_caps_free(*handle); *handle = NULL, "PCF8574 initialization failed. Task initialization failed.");
         _interrupt_gpio = config->interrupt_gpio;
     }
