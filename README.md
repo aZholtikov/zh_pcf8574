@@ -8,16 +8,6 @@
 4. Event-based architecture using esp_event framework.
 5. Statistics tracking for debugging and monitoring.
 
-## Note
-
-Enable the following settings in menuconfig:
-
-```text
-GPIO_CTRL_FUNC_IN_IRAM
-I2C_ISR_IRAM_SAFE
-I2C_MASTER_ISR_HANDLER_IN_IRAM
-```
-
 ## Using
 
 In an existing project, run the following command to install the components:
