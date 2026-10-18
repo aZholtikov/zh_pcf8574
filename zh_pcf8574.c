@@ -238,10 +238,16 @@ esp_err_t zh_pcf8574_deinit(zh_pcf8574_handle_t **handle)
         {
             ZH_ERROR_CHECK_CONT(gpio_isr_handler_remove(_interrupt_gpio) == ESP_OK, NULL, "PCF8574 deinitialization failed. Remove GPIO isr handler failed.");
             ZH_ERROR_CHECK_CONT(gpio_reset_pin(_interrupt_gpio) == ESP_OK, NULL, "PCF8574 deinitialization failed. Reset GPIO failed.");
-            vTaskDelete(zh_pcf8574);
-            zh_pcf8574 = NULL;
-            vSemaphoreDelete(_interrupt_semaphore);
-            _interrupt_semaphore = NULL;
+            if (zh_pcf8574 != NULL)
+            {
+                vTaskDelete(zh_pcf8574);
+                zh_pcf8574 = NULL;
+            }
+            if (_interrupt_semaphore != NULL)
+            {
+                vSemaphoreDelete(_interrupt_semaphore);
+                _interrupt_semaphore = NULL;
+            }
             _interrupt_gpio = GPIO_NUM_MAX;
         }
         ZH_ERROR_CHECK(zh_vector_free(&_vector) == ESP_OK, ESP_FAIL, NULL, "PCF8574 deinitialization failed. Free vector failed.");
